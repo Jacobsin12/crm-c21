@@ -1,6 +1,5 @@
 #!/bin/bash
 # Script de instalación automática del CRM Century 21
-set -e
 
 echo "========================================"
 echo "🚀 Instalando CRM Century 21..."
@@ -8,8 +7,8 @@ echo "========================================"
 
 # 1. Dependencias del sistema
 echo "📦 [1/6] Instalando dependencias..."
-sudo apt-get update -qq
-sudo apt-get install -y -qq nginx nodejs npm python3-pip python3-venv libzbar0 mysql-server
+sudo apt-get update -qq 2>/dev/null || true
+sudo apt-get install -y nginx nodejs npm python3-pip python3-venv libzbar0 mysql-server
 
 # 2. MySQL
 echo "🗄️  [2/6] Configurando MySQL..."

@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --gold-primary: #d4af37;
+    --gold-dark: #aa841e;
+    --text-dark: #1e1b4b; /* Un tono oscuro elegante para los textos interactivos */
+}
+
+body {
+    font-family: var(--font-sans) !important;
+    background-color: #ffffff; /* Fondo de pantalla completamente negro */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* El contenedor principal que simula el marco dorado */
+.luxury-frame {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    background-image: radial-gradient(circle at top right, rgba(212, 175, 55, 0.15), transparent 40%);
+    box-sizing: border-box;
+    padding: 1rem;
+}
+
+
+/* La tarjeta blanca limpia de tu captura */
+.luxury-card {
+    background-color: #ffffff !important;
+    border-radius: 2rem !important; /* Esquinas bien redondeadas */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    padding: 2.5rem !important;
+    width: 100%;
+    max-width: 28rem; /* Ancho perfecto e idéntico a tu imagen */
+    margin: 1rem;
+}
+
+/* Botón con el degradado dorado metálico exacto */
+.luxury-btn {
+    background: linear-gradient(to right, var(--gold-primary), var(--gold-dark)) !important;
+    color: #000000 !important; /* Letras negras arriba del botón dorado */
+    font-weight: 700 !important;
+    border-radius: 9999px !important; /* Totalmente ovalado como tu captura */
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 10px 15px -3px rgba(212, 175, 55, 0.3) !important;
+}
+.luxury-btn:hover {
+    opacity: 0.95;
+    transform: scale(1.01);
+}
+.luxury-btn:active {
+    transform: scale(0.99);
+}
+
+/* Las opciones interactivas (Comprar, rentar, zonas) en modo claro premium */
+.luxury-option-btn {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #334155 !important;
+    transition: all 0.2s ease;
+}
+.luxury-option-btn:hover {
+    border-color: var(--gold-primary) !important;
+    background-color: #fefce8 !important; /* Un toque sutil crema al pasar el mouse */
+}
+.luxury-option-btn.selected {
+    border-color: var(--gold-primary) !important;
+    background-color: #fef9c3 !important;
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+/* Inputs claros elegantes para los datos */
+.luxury-input {
+    background-color: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    border-radius: 0.75rem !important;
+}
+.luxury-input:focus {
+    outline: none !important;
+    border-color: var(--gold-primary) !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* Animación de entrada */
+.animate-fade-in {
+    animation: fadeIn 0.35s ease-out forwards;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}

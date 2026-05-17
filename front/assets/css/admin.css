@@ -1,0 +1,105 @@
+/* ==========================================
+   ESTILOS EXCLUSIVOS DEL PANEL DE ADMINISTRACIÓN (TEMA CLARO LUXURY)
+   ========================================== */
+
+/* Fondo claro premium para el panel de administración */
+.custom-bg {
+    background: #f8fafc !important; /* Slate 50 - Un blanco muy sutil y elegante */
+    background-attachment: fixed !important;
+    color: #1e293b !important; /* Texto base oscuro */
+}
+
+/* Adaptación automática de textos: si en el HTML decía blanco, lo pasamos a oscuro */
+.custom-bg .text-slate-100, .custom-bg .text-white {
+    color: #0f172a !important;
+}
+
+/* Header superior del admin claro y de cristal */
+header {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 1.25rem 2rem !important;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03) !important;
+    margin-top: 1rem;
+}
+
+/* Scrollbar personalizada premium (clara) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--gold-dark);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gold-primary);
+}
+
+/* Efecto Neón / Glow sutil para las tarjetas blancas en fondo blanco */
+.custom-bg .luxury-card {
+    background-color: #ffffff !important;
+    border-radius: 1.5rem !important;
+    border: 1px solid rgba(212, 175, 55, 0.15) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 0 15px rgba(212, 175, 55, 0.05) !important;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.custom-bg .luxury-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1), 0 0 30px rgba(212, 175, 55, 0.15) !important;
+}
+
+/* Animación pulsante para el botón de Procesar IA */
+@keyframes goldPulse {
+    0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+    70% { box-shadow: 0 0 0 12px rgba(212, 175, 55, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+
+.custom-bg .luxury-btn {
+    animation: goldPulse 2s infinite;
+}
+.custom-bg .luxury-btn:hover {
+    animation: none;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5) !important;
+}
+
+/* Animación de entrada suave y escalonada para filas de tablas y tarjetas */
+@keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+tbody tr, .bg-slate-50, .bg-slate-200 {
+    animation: slideUpFade 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Filas de la tabla hiper-interactivas */
+.custom-bg table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: default;
+}
+.custom-bg table tbody tr:hover {
+    background: linear-gradient(90deg, #ffffff 0%, #fffdf5 100%) !important;
+    transform: scale(1.005) translateX(4px);
+    box-shadow: -4px 4px 15px rgba(0,0,0,0.02);
+    border-left: 3px solid var(--gold-primary);
+}
+
+/* Mejoras para la Dropzone del PDF */
+#dropzone {
+    transition: all 0.3s ease;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+#dropzone:hover {
+    background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+    border-color: var(--gold-primary);
+    box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.05);
+}

@@ -1,0 +1,10 @@
+node_modules/
+.env
+google_token.json
+uploads_temp/
+*.zip
+*.sql
+__pycache__/
+*.pyc
+venv/
+.DS_Store

@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../assets/icons/c21.png">
+    <title>Prospectos | Sweethome Compass Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../assets/css/global.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="custom-bg min-h-screen text-slate-100 font-sans antialiased p-6">
+
+    <main class="max-w-6xl mx-auto animate-fade-in">
+        <div class="luxury-card !m-0 !max-w-none">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="users" class="text-[--gold-primary] w-5 h-5"></i>
+                    <h2 class="text-lg font-bold text-slate-900">Prospectos Registrados</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="filtroEstadoCliente" onchange="aplicarFiltroClientes()" class="bg-slate-50 border border-slate-200 text-slate-600 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-[--gold-primary]">
+                        <option value="Todos">Todos los prospectos</option>
+                        <option value="Nuevo">Nuevos (Sin Contactar)</option>
+                        <option value="Contactado">Contactados / En Seguimiento</option>
+                        <option value="Cerrado">Cerrados</option>
+                    </select>
+                    <button onclick="cargarClientes()" class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                        <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-100">
+                        <tr>
+                            <th class="p-3">Nombre / Contacto</th>
+                            <th class="p-3">BÃºsqueda</th>
+                            <th class="p-3">Presupuesto / Zonas</th>
+                            <th class="p-3 text-center">Match</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaClientes" class="text-slate-700 font-medium divide-y divide-slate-100">
+                        <tr><td colspan="4" class="p-4 text-center text-slate-400">Consultando API...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="modalMatch" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden animate-fade-in">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-3xl max-h-[85vh] overflow-y-auto m-4 border border-amber-500/10 shadow-2xl">
+            <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-4">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-[--gold-primary]">Algoritmo Inmobiliario</span>
+                    <h3 id="modalClienteNombre" class="text-lg font-bold text-slate-900">AnÃ¡lisis de Coincidencias</h3>
+                </div>
+                <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1.5 mb-3"><i data-lucide="check-circle" class="w-4 h-4"></i> Coincidencias Exactas</h4>
+                    <div id="contenedorExactas" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1.5 mb-3"><i data-lucide="help-circle" class="w-4 h-4"></i> Alternativas (+25%)</h4>
+                    <div id="contenedorAlternativas" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="navbar.js"></script>
+    <script>renderLuxuryNavbar('clientes');</script>
+    <script src="../assets/js/api.js"></script>
+    <script src="admin.js"></script>
+    <script>cargarClientes();</script>
+</body>
+</html>

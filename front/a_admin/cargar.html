@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../assets/icons/c21.png">
+    <title>Cargar Fichas | Sweethome Compass Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../assets/css/global.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="custom-bg min-h-screen text-slate-100 font-sans antialiased p-6">
+
+    <main class="max-w-xl mx-auto animate-fade-in">
+        <div class="luxury-card !m-0">
+            <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="file-up" class="text-[--gold-primary] w-5 h-5"></i>
+                <h2 class="text-lg font-bold text-slate-900">Alimentar Inventario Inteligente</h2>
+            </div>
+            <p class="text-slate-500 text-xs font-medium mb-6">Arrastra las fichas tÃ©cnicas en formato PDF. La IA de Python leerÃ¡ los datos, calcularÃ¡ precios, zonas y caracterÃ­sticas en segundos.</p>
+            
+            <div id="dropzone" class="border-2 border-dashed border-slate-300 hover:border-[--gold-primary] rounded-2xl p-8 text-center cursor-pointer transition-all bg-slate-50/50 flex flex-col items-center justify-center gap-3 group">
+                <div class="w-12 h-12 rounded-full bg-amber-50 text-[--gold-primary] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
+                </div>
+                <span class="text-xs font-bold text-slate-700">Arrastra tus PDFs aquÃ­</span>
+                <span class="text-[10px] text-slate-400 font-semibold uppercase">o da clic para explorar archivos</span>
+                <input type="file" id="fileInput" multiple accept=".pdf" class="hidden">
+            </div>
+
+            <div id="fileList" class="mt-5 space-y-2 text-xs font-semibold text-slate-700"></div>
+
+            <button type="button" id="btnProcesarPdf" class="luxury-btn w-full py-3.5 mt-5 text-xs flex items-center justify-center gap-2 cursor-pointer hidden">
+                Procesar con Inteligencia Artificial <i data-lucide="cpu" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </main>
+
+    <script src="navbar.js"></script>
+    <script>renderLuxuryNavbar('cargar');</script>
+    <script src="../assets/js/api.js"></script>
+    <script src="admin.js"></script>
+    <script>inicializarDropzone();</script>
+</body>
+</html>

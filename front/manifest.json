@@ -1,0 +1,17 @@
+{
+  "name": "CRM Inmobiliario C21",
+  "short_name": "CRM C21",
+  "start_url": "./cliente/index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/609/609034.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

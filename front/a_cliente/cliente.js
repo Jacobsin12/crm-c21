@@ -12,8 +12,9 @@
             html: `
                 <div class="text-center space-y-6 py-2">
                     <div class="flex justify-center mb-2">
-                        <div class="bg-white border border-slate-200 px-6 py-3 rounded-2xl flex items-center justify-center shadow-sm">
+                        <div class="bg-white border border-slate-200 px-6 py-3 rounded-2xl flex items-center justify-center gap-2 shadow-sm">
                             <img src="../assets/icons/c21.png" alt="Century 21" class="h-6 object-contain">
+                            <span class="font-bold tracking-wider text-sm text-[var(--text-dark)]">Century 21</span>
                         </div>
                     </div>
 

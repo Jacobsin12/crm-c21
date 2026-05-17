@@ -127,7 +127,7 @@ app.post('/api/admin/login', async (req, res) => {
             const token = jwt.sign(
                 { id: user.id, username: user.username, rol: user.rol, nombre_completo: user.nombre_completo }, 
                 process.env.JWT_SECRET, 
-                { expiresIn: '24h' }
+                { expiresIn: '365d' }
             );
             
             res.json({ status: 'success', token, message: 'Login exitoso' });

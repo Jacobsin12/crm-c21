@@ -64,6 +64,11 @@ async function suscribirPush() {
                         'Authorization': `Bearer ${window.adminToken}`
                     }
                 });
+                
+                // Ocultar banner si existe
+                const banner = document.getElementById('pushBanner');
+                if (banner) banner.remove();
+                mostrarNotificacion('¡Notificaciones activadas! 🔔', 'success');
             }
         } catch (e) {
             console.error('Push Registration failed', e);
@@ -82,9 +87,39 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
+// Mostrar banner para activar notificaciones (iOS requiere gesto del usuario)
 if (!window.location.pathname.includes('login.html')) {
-    document.addEventListener("DOMContentLoaded", () => {
-        setTimeout(suscribirPush, 2000); // Wait 2s to not block UI
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Registrar SW silenciosamente
+        if ('serviceWorker' in navigator) {
+            await navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+        
+        // Verificar si ya tiene permiso
+        if ('Notification' in window && Notification.permission === 'granted') {
+            // Ya tiene permiso, suscribir silenciosamente
+            setTimeout(suscribirPush, 1000);
+        } else if ('Notification' in window && Notification.permission !== 'denied') {
+            // Mostrar banner para pedir permiso con gesto del usuario
+            setTimeout(() => {
+                const banner = document.createElement('div');
+                banner.id = 'pushBanner';
+                banner.className = 'fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-slate-900 border border-amber-500/30 text-white p-4 rounded-2xl shadow-2xl z-50 flex items-center gap-3 animate-fade-in';
+                banner.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="bell-ring" class="w-5 h-5 text-amber-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold">¿Activar notificaciones?</p>
+                        <p class="text-xs text-slate-400">Recibe alertas cuando llegue un nuevo prospecto.</p>
+                    </div>
+                    <button onclick="suscribirPush()" class="bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs px-4 py-2 rounded-xl cursor-pointer transition-colors flex-shrink-0">Activar</button>
+                    <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-white cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+                `;
+                document.body.appendChild(banner);
+                lucide.createIcons();
+            }, 2000);
+        }
     });
 }
 

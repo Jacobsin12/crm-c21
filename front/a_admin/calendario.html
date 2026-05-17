@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -22,7 +22,7 @@
 
     <main class="max-w-6xl mx-auto grid grid-cols-1 gap-6 animate-fade-in pb-20">
         
-        <!-- Header / TÃ­tulo -->
+        <!-- Header / Título -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
             <div>
                 <h2 class="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
@@ -30,17 +30,22 @@
                     Mi Agenda Inteligente
                 </h2>
                 <p class="text-sm text-slate-500 font-medium mt-1">
-                    SincronizaciÃ³n en tiempo real con Google Calendar
+                    Sincronización en tiempo real con Google Calendar
                 </p>
             </div>
             
-            <div class="flex gap-2">
+            <div class="flex items-center gap-3">
+                <div class="relative hidden" id="contenedorFiltro">
+                    <input type="date" id="filtroFecha" onchange="aplicarFiltroFecha()" class="border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-[--gold-primary] outline-none text-slate-600 bg-white shadow-sm cursor-pointer" title="Filtrar por fecha">
+                    <button onclick="document.getElementById('filtroFecha').value=''; aplicarFiltroFecha()" class="absolute -right-8 top-2.5 text-slate-400 hover:text-rose-500 cursor-pointer" title="Limpiar filtro"><i data-lucide="x-circle" class="w-5 h-5"></i></button>
+                </div>
+                
                 <button id="btnAuthGoogle" onclick="loginGoogle()" class="luxury-btn px-5 py-2.5 text-sm flex items-center gap-2 cursor-pointer shadow-xl hidden">
                     <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" class="w-4 h-4" alt="Google">
                     Vincular con Google
                 </button>
 
-                <button id="btnNuevaCita" onclick="abrirModalCita()" class="bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 cursor-pointer shadow-lg hidden">
+                <button id="btnNuevaCita" onclick="abrirModalCita()" class="bg-slate-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 cursor-pointer shadow-lg hidden ml-8">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     Nueva Cita
                 </button>
@@ -56,7 +61,7 @@
             </div>
 
             <div id="gridCitas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden">
-                <!-- Las citas se insertarÃ¡n aquÃ­ por JS -->
+                <!-- Las citas se insertarán aquí por JS -->
             </div>
 
             <div id="noAuthMessage" class="hidden flex flex-col items-center justify-center h-64 text-center">
@@ -64,7 +69,7 @@
                     <i data-lucide="calendar-off" class="w-8 h-8 text-slate-300"></i>
                 </div>
                 <h3 class="text-slate-900 font-bold text-lg mb-2">Permisos Actualizados</h3>
-                <p class="text-slate-500 text-sm max-w-sm mx-auto mb-6">Hemos habilitado la funciÃ³n para crear citas directamente desde tu CRM. Por favor, vuelve a iniciar sesiÃ³n con Google para aplicar los nuevos permisos.</p>
+                <p class="text-slate-500 text-sm max-w-sm mx-auto mb-6">Hemos habilitado la función para crear citas directamente desde tu CRM. Por favor, vuelve a iniciar sesión con Google para aplicar los nuevos permisos.</p>
                 <button onclick="loginGoogle()" class="luxury-btn px-6 py-2.5 text-sm flex items-center gap-2 cursor-pointer shadow-lg">
                     Re-conectar Google Calendar
                 </button>
@@ -78,13 +83,14 @@
     <div id="modalNuevaCita" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl p-6 border border-slate-100 transform scale-95 transition-all">
             <div class="flex justify-between items-center mb-5">
-                <h3 class="text-xl font-black text-slate-900">Programar Cita</h3>
+                <h3 class="text-xl font-black text-slate-900" id="tituloModalCita">Programar Cita</h3>
                 <button onclick="cerrarModalCita()" class="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors cursor-pointer">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
 
             <form id="formNuevaCita" class="space-y-4">
+                <input type="hidden" id="citaId">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">TÃTULO O ASUNTO</label>
                     <input type="text" id="citaTitulo" required class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[--gold-primary] focus:border-transparent outline-none bg-slate-50 focus:bg-white transition-all" placeholder="Ej. Firma de Contrato">
@@ -107,8 +113,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">UBICACIÃ“N (OPCIONAL)</label>
-                    <input type="text" id="citaUbicacion" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[--gold-primary] focus:border-transparent outline-none bg-slate-50 focus:bg-white transition-all" placeholder="DirecciÃ³n de la propiedad o enlace de Zoom">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">UBICACIÓN (OPCIONAL)</label>
+                    <input type="text" id="citaUbicacion" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[--gold-primary] focus:border-transparent outline-none bg-slate-50 focus:bg-white transition-all" placeholder="Dirección de la propiedad o enlace de Zoom">
                 </div>
 
                 <div>
@@ -132,6 +138,8 @@
     <script>
         window.API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:3000/api' : '/api';
+        
+        window.citasGlobal = [];
 
         async function cargarCalendario() {
             const grid = document.getElementById('gridCitas');
@@ -139,6 +147,7 @@
             const noAuth = document.getElementById('noAuthMessage');
             const btnAuth = document.getElementById('btnAuthGoogle');
             const btnNueva = document.getElementById('btnNuevaCita');
+            const contenedorFiltro = document.getElementById('contenedorFiltro');
 
             try {
                 const response = await fetch(`${window.API_BASE_URL}/admin/calendario`);
@@ -150,65 +159,17 @@
                     noAuth.classList.remove('hidden');
                     btnAuth.classList.remove('hidden');
                     btnNueva.classList.add('hidden');
+                    contenedorFiltro.classList.add('hidden');
                     return;
                 }
 
                 if (res.status === 'success') {
                     grid.classList.remove('hidden');
                     btnNueva.classList.remove('hidden');
+                    contenedorFiltro.classList.remove('hidden');
                     
-                    if (res.data.length === 0) {
-                        grid.innerHTML = `<p class="col-span-full text-center text-slate-400 py-10">No tienes prÃ³ximas citas programadas.</p>`;
-                        return;
-                    }
-
-                    // Renderizar citas
-                    grid.innerHTML = res.data.map(evento => {
-                        const inicio = new Date(evento.start.dateTime || evento.start.date);
-                        const fin = new Date(evento.end.dateTime || evento.end.date);
-                        
-                        // Formatear Fecha (Ej. 15 de Mayo)
-                        const fechaFormat = inicio.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
-                        // Formatear Hora (Ej. 10:30 AM)
-                        const horaInicio = inicio.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                        const horaFin = fin.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-                        
-                        // Â¿Es hoy?
-                        const esHoy = new Date().toDateString() === inicio.toDateString();
-                        const tagHoy = esHoy ? `<span class="bg-rose-50 text-rose-500 text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-wider border border-rose-100">Hoy</span>` : '';
-
-                        return `
-                        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 hover:border-amber-500/30 transition-all hover:shadow-md group relative">
-                            <a href="${evento.htmlLink}" target="_blank" class="absolute top-4 right-4 text-slate-300 hover:text-[--gold-primary] transition-colors" title="Ver en Google Calendar">
-                                <i data-lucide="external-link" class="w-4 h-4"></i>
-                            </a>
-                            
-                            <div class="flex items-center gap-2 mb-3">
-                                <div class="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex flex-col items-center justify-center text-[--gold-primary]">
-                                    <span class="text-[9px] font-black uppercase leading-none">${inicio.toLocaleDateString('es-MX', { month: 'short' })}</span>
-                                    <span class="text-sm font-black leading-tight">${inicio.getDate()}</span>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-slate-900 text-sm line-clamp-1 pr-6">${evento.summary || 'Cita sin tÃ­tulo'}</h3>
-                                    <div class="flex items-center gap-2">
-                                        <p class="text-[10px] text-slate-500 font-medium"><i data-lucide="clock" class="inline w-3 h-3 mr-0.5 mb-0.5"></i> ${horaInicio} - ${horaFin}</p>
-                                        ${tagHoy}
-                                    </div>
-                                </div>
-                            </div>
-
-                            ${evento.description ? `<p class="text-[11px] text-slate-500 line-clamp-2 mt-2 leading-relaxed bg-white p-2 rounded-lg border border-slate-100">${evento.description}</p>` : ''}
-                            
-                            ${evento.location ? `
-                            <div class="mt-3 pt-3 border-t border-slate-100 flex items-start gap-1">
-                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0"></i>
-                                <span class="text-[10px] text-slate-600 font-medium line-clamp-1">${evento.location}</span>
-                            </div>` : ''}
-                        </div>
-                        `;
-                    }).join('');
-                    
-                    lucide.createIcons();
+                    window.citasGlobal = res.data;
+                    aplicarFiltroFecha();
                 }
 
             } catch (error) {
@@ -217,24 +178,101 @@
             }
         }
 
+        function aplicarFiltroFecha() {
+            const grid = document.getElementById('gridCitas');
+            const filtro = document.getElementById('filtroFecha').value;
+            
+            let citasFiltradas = window.citasGlobal;
+
+            if (filtro) {
+                // El filtro viene en formato YYYY-MM-DD
+                citasFiltradas = window.citasGlobal.filter(evento => {
+                    const inicio = new Date(evento.start.dateTime || evento.start.date);
+                    // Ajuste de zona horaria para comparar correctamente
+                    const fechaEvento = inicio.toISOString().split('T')[0];
+                    return fechaEvento === filtro;
+                });
+            }
+
+            if (citasFiltradas.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-center text-slate-400 py-10">No hay citas programadas${filtro ? ' para este día' : ''}.</p>`;
+                return;
+            }
+
+            grid.innerHTML = citasFiltradas.map(evento => {
+                const inicio = new Date(evento.start.dateTime || evento.start.date);
+                const fin = new Date(evento.end.dateTime || evento.end.date);
+                
+                const horaInicio = inicio.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                const horaFin = fin.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                
+                const esHoy = new Date().toDateString() === inicio.toDateString();
+                const tagHoy = esHoy ? `<span class="bg-rose-50 text-rose-500 text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-wider border border-rose-100">Hoy</span>` : '';
+
+                // Serializar datos para el botón de editar
+                const datosCita = encodeURIComponent(JSON.stringify({
+                    id: evento.id,
+                    titulo: evento.summary,
+                    fecha: inicio.toISOString().split('T')[0],
+                    horaInicio: horaInicio,
+                    horaFin: horaFin,
+                    ubicacion: evento.location || '',
+                    notas: evento.description || ''
+                }));
+
+                return `
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 hover:border-amber-500/30 transition-all hover:shadow-md group relative">
+                    <div class="absolute top-3 right-3 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-white p-1 rounded-lg shadow-sm border border-slate-100">
+                        <button onclick="abrirModalCita('${datosCita}')" class="text-slate-400 hover:text-[--gold-primary] p-1.5 transition-colors cursor-pointer" title="Editar Cita">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="eliminarCita('${evento.id}')" class="text-slate-400 hover:text-rose-500 p-1.5 transition-colors cursor-pointer" title="Borrar Cita">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 mb-3 pr-16">
+                        <div class="w-10 h-10 rounded-xl bg-white shadow-sm border border-slate-100 flex flex-col items-center justify-center text-[--gold-primary] shrink-0">
+                            <span class="text-[9px] font-black uppercase leading-none">${inicio.toLocaleDateString('es-MX', { month: 'short' })}</span>
+                            <span class="text-sm font-black leading-tight">${inicio.getDate()}</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-sm line-clamp-1">${evento.summary || 'Cita sin título'}</h3>
+                            <div class="flex items-center gap-2">
+                                <p class="text-[10px] text-slate-500 font-medium"><i data-lucide="clock" class="inline w-3 h-3 mr-0.5 mb-0.5"></i> ${horaInicio} - ${horaFin}</p>
+                                ${tagHoy}
+                            </div>
+                        </div>
+                    </div>
+
+                    ${evento.description ? `<p class="text-[11px] text-slate-500 line-clamp-2 mt-2 leading-relaxed bg-white p-2 rounded-lg border border-slate-100">${evento.description}</p>` : ''}
+                    
+                    ${evento.location ? `
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-start gap-1">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0"></i>
+                        <span class="text-[10px] text-slate-600 font-medium line-clamp-1">${evento.location}</span>
+                    </div>` : ''}
+                </div>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
         async function loginGoogle() {
             try {
                 const response = await fetch(`${window.API_BASE_URL}/auth/google/url`);
                 const res = await response.json();
                 if (res.status === 'success') {
-                    // Abrir popup de autenticaciÃ³n
                     window.open(res.url, 'Google Auth', 'width=500,height=600');
+                    mostrarNotificacion("Completa el inicio de sesión en la ventana emergente.", "info");
                     
-                    // Escuchar cuando el popup se cierre o recargar tras unos segundos
-                    mostrarNotificacion("Completa el inicio de sesiÃ³n en la ventana emergente.", "info");
-                    
-                    // VerificaciÃ³n simple cada 2 segundos para ver si ya hay token
                     const checkAuth = setInterval(async () => {
                         const checkRes = await fetch(`${window.API_BASE_URL}/admin/calendario`);
                         const checkData = await checkRes.json();
                         if (checkData.status !== 'unauthorized') {
                             clearInterval(checkAuth);
-                            mostrarNotificacion("Â¡AutenticaciÃ³n exitosa!", "success");
+                            mostrarNotificacion("¡Autenticación exitosa!", "success");
                             location.reload();
                         }
                     }, 2000);
@@ -245,15 +283,47 @@
         }
 
         // Modal Logic
-        function abrirModalCita() {
+        function abrirModalCita(datosStr = null) {
             const now = new Date();
-            // Pre-fill fecha actual
-            document.getElementById('citaFecha').value = now.toISOString().split('T')[0];
+            const inputFecha = document.getElementById('citaFecha');
+            const todayStr = now.toISOString().split('T')[0];
+            
+            // Establecer el mínimo a hoy
+            inputFecha.setAttribute('min', todayStr);
+
+            if (datosStr) {
+                const datos = JSON.parse(decodeURIComponent(datosStr));
+                document.getElementById('tituloModalCita').innerText = "Editar Cita";
+                document.getElementById('citaId').value = datos.id;
+                document.getElementById('citaTitulo').value = datos.titulo;
+                document.getElementById('citaFecha').value = datos.fecha;
+                document.getElementById('citaHoraInicio').value = convertirHora24(datos.horaInicio);
+                document.getElementById('citaHoraFin').value = convertirHora24(datos.horaFin);
+                document.getElementById('citaUbicacion').value = datos.ubicacion;
+                document.getElementById('citaNotas').value = datos.notas;
+                document.getElementById('btnGuardarCita').innerHTML = "Actualizar Cita";
+            } else {
+                document.getElementById('formNuevaCita').reset();
+                document.getElementById('tituloModalCita').innerText = "Programar Cita";
+                document.getElementById('citaId').value = "";
+                inputFecha.value = todayStr;
+                document.getElementById('btnGuardarCita').innerHTML = "Guardar en Google Calendar";
+            }
             
             document.getElementById('modalNuevaCita').classList.remove('hidden');
             setTimeout(() => {
                 document.getElementById('modalNuevaCita').children[0].classList.remove('scale-95');
             }, 10);
+        }
+
+        function convertirHora24(hora12) {
+            // Convierte "02:30 PM" a "14:30" para los inputs type="time"
+            if(!hora12) return "";
+            const [time, modifier] = hora12.split(' ');
+            let [hours, minutes] = time.split(':');
+            if (hours === '12') hours = '00';
+            if (modifier === 'PM' || modifier === 'p.m.') hours = parseInt(hours, 10) + 12;
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
         }
 
         function cerrarModalCita() {
@@ -271,6 +341,7 @@
             btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Guardando...';
             btn.disabled = true;
 
+            const id = document.getElementById('citaId').value;
             const titulo = document.getElementById('citaTitulo').value;
             const fecha = document.getElementById('citaFecha').value;
             const horaInicio = document.getElementById('citaHoraInicio').value;
@@ -278,13 +349,15 @@
             const ubicacion = document.getElementById('citaUbicacion').value;
             const notas = document.getElementById('citaNotas').value;
 
-            // Formatear a ISO 8601 con zona horaria
             const startDateTime = `${fecha}T${horaInicio}:00-06:00`;
             const endDateTime = `${fecha}T${horaFin}:00-06:00`;
 
+            const url = id ? `${window.API_BASE_URL}/admin/calendario/${id}` : `${window.API_BASE_URL}/admin/calendario`;
+            const method = id ? 'PUT' : 'POST';
+
             try {
-                const response = await fetch(`${window.API_BASE_URL}/admin/calendario`, {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         summary: titulo,
@@ -299,24 +372,37 @@
                 
                 if (res.status === 'success') {
                     cerrarModalCita();
-                    mostrarNotificacion('Â¡Cita creada en Google Calendar!', 'success');
-                    
-                    // Recargar calendario
-                    document.getElementById('gridCitas').innerHTML = '';
-                    document.getElementById('gridCitas').classList.add('hidden');
-                    document.getElementById('loadingCitas').classList.remove('hidden');
+                    mostrarNotificacion(`¡Cita ${id ? 'actualizada' : 'creada'} con éxito!`, 'success');
                     cargarCalendario();
                 } else {
-                    mostrarNotificacion('Error al crear la cita', 'error');
+                    mostrarNotificacion(res.message || 'Error al guardar la cita', 'error');
                 }
             } catch (error) {
-                mostrarNotificacion('Error de conexiÃ³n', 'error');
+                mostrarNotificacion('Error de conexión', 'error');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
                 lucide.createIcons();
             }
         });
+
+        async function eliminarCita(id) {
+            if (!confirm("¿Estás seguro de que deseas eliminar esta cita? Esto la borrará también de tu Google Calendar.")) return;
+            
+            try {
+                const response = await fetch(`${window.API_BASE_URL}/admin/calendario/${id}`, { method: 'DELETE' });
+                const res = await response.json();
+                
+                if (res.status === 'success') {
+                    mostrarNotificacion('Cita eliminada correctamente', 'info');
+                    cargarCalendario();
+                } else {
+                    mostrarNotificacion(res.message || 'Error al eliminar', 'error');
+                }
+            } catch (e) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
 
         // Iniciar
         document.addEventListener('DOMContentLoaded', cargarCalendario);

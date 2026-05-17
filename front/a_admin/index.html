@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../assets/icons/c21.png">
-    <title>Panel de AdministraciÃ³n | Sweethome Compass</title>
+    <title>Panel de Administración | Century 21</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="../assets/css/global.css">
@@ -19,11 +19,11 @@
             </div>
             <div>
                 <span class="text-xs font-bold uppercase tracking-widest text-[--gold-primary]">Consola de Control</span>
-                <h1 class="text-xl font-bold tracking-tight text-white">SWEETHOME COMPASS ADMIN</h1>
+                <h1 class="text-xl font-bold tracking-tight text-white">Dashboard Century 21</h1>
             </div>
         </div>
         <div class="text-right text-xs text-slate-400 font-medium">
-            SesiÃ³n: <span class="text-white font-semibold">Mtra. Cecilia RamÃ­rez</span>
+            Sesión: <span id="nombreUsuarioGlobal" class="text-white font-semibold">Cargando...</span>
         </div>
     </header>
 
@@ -33,7 +33,7 @@
             <div class="luxury-card !m-0 !max-w-none">
                 <div class="flex items-center gap-2 mb-4">
                     <i data-lucide="file-up" class="text-[--gold-primary] w-5 h-5"></i>
-                    <h2 class="text-lg font-bold text-slate-900">Cargar Fichas TÃ©cnicas</h2>
+                    <h2 class="text-lg font-bold text-slate-900">Cargar Fichas Técnicas</h2>
                 </div>
                 <p class="text-slate-500 text-xs font-medium mb-4">Arrastra o selecciona hasta 5 archivos PDF para alimentar el inventario mediante IA.</p>
                 
@@ -41,7 +41,7 @@
                     <div class="w-12 h-12 rounded-full bg-amber-50 text-[--gold-primary] flex items-center justify-center group-hover:scale-110 transition-transform">
                         <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
                     </div>
-                    <span class="text-xs font-bold text-slate-700">Arrastra tus PDFs aquÃ­</span>
+                    <span class="text-xs font-bold text-slate-700">Arrastra tus PDFs aquí</span>
                     <span class="text-[10px] text-slate-400 font-semibold uppercase">o dale clic para buscar</span>
                     <input type="file" id="fileInput" multiple accept=".pdf" class="hidden">
                 </div>
@@ -71,7 +71,7 @@
                         <thead class="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-100">
                             <tr>
                                 <th class="p-3">Nombre / Contacto</th>
-                                <th class="p-3">BÃºsqueda</th>
+                                <th class="p-3">Búsqueda</th>
                                 <th class="p-3">Presupuesto / Zonas</th>
                                 <th class="p-3 text-center">Match</th>
                             </tr>
@@ -92,7 +92,7 @@
             <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-4">
                 <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-[--gold-primary]">Algoritmo Inmobiliario</span>
-                    <h3 id="modalClienteNombre" class="text-lg font-bold text-slate-900">AnÃ¡lisis de Coincidencias</h3>
+                    <h3 id="modalClienteNombre" class="text-lg font-bold text-slate-900">Análisis de Coincidencias</h3>
                 </div>
                 <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>

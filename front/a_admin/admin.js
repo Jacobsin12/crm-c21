@@ -1,3 +1,93 @@
+// ==========================================
+// SEGURIDAD / LOGIN GLOBAL
+// ==========================================
+window.adminToken = localStorage.getItem('adminToken');
+if (!window.location.pathname.includes('login.html')) {
+    if (!window.adminToken) {
+        window.location.href = 'login.html';
+    } else {
+        try {
+            window.usuarioActual = JSON.parse(atob(window.adminToken.split('.')[1]));
+            document.addEventListener("DOMContentLoaded", () => {
+                const nombreEl = document.getElementById('nombreUsuarioGlobal');
+                if (nombreEl) {
+                    nombreEl.innerText = window.usuarioActual.nombre_completo || window.usuarioActual.username || 'Usuario';
+                }
+            });
+        } catch (e) {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'login.html';
+        }
+    }
+}
+
+const originalFetch = window.fetch;
+window.fetch = async function() {
+    let [resource, config] = arguments;
+    if (typeof resource === 'string' && resource.includes('/api/admin') && !resource.includes('/login')) {
+        config = config || {};
+        if (!config.headers) config.headers = {};
+        if (window.adminToken) {
+            config.headers['Authorization'] = `Bearer ${window.adminToken}`;
+        }
+        const response = await originalFetch(resource, config);
+        if (response.status === 401) {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'login.html';
+        }
+        return response;
+    }
+    return originalFetch(resource, config);
+};
+
+// ==========================================
+// NOTIFICACIONES PUSH (PWA)
+// ==========================================
+async function suscribirPush() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+            const register = await navigator.serviceWorker.register('/sw.js');
+            const permission = await Notification.requestPermission();
+            
+            if (permission === 'granted') {
+                const publicVapidKey = 'BKEkmGXk344Z78au064U-RqjIYHMuAW5AyfhwPh83tNcb26Pb-TNnsaUcLdSfTpwfu7jHFCtu3MTw0_bq5h4VQA';
+                const subscription = await register.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+                });
+                
+                await fetch('/api/admin/push/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify(subscription),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.adminToken}`
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Push Registration failed', e);
+        }
+    }
+}
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+if (!window.location.pathname.includes('login.html')) {
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(suscribirPush, 2000); // Wait 2s to not block UI
+    });
+}
+
 let archivosEnCola = [];
 
 // ==========================================
@@ -47,7 +137,7 @@ window.mostrarNotificacion = function(mensaje, tipo = 'success') {
 // CONEXIÓN SSE PARA NOTIFICACIONES EN TIEMPO REAL
 // ==========================================
 function inicializarSSE() {
-    const sse = new EventSource(`${window.API_BASE_URL}/admin/sse`);
+    const sse = new EventSource(`${window.API_BASE_URL}/admin/sse?token=${window.adminToken || ''}`);
     
     sse.onmessage = (event) => {
         try {
@@ -107,11 +197,14 @@ function aplicarFiltroClientes() {
     const filtrados = window.clientesGlobal.filter(c => filtro === "Todos" || c.estado_seguimiento === filtro);
 
     if (filtrados.length > 0) {
-        tabla.innerHTML = filtrados.map(c => `
+        tabla.innerHTML = filtrados.map(c => {
+            const requiereSeguimiento = c.estado_seguimiento !== 'Cerrado' && (!c.fecha_ultimo_contacto || (new Date() - new Date(c.fecha_ultimo_contacto)) / (1000 * 60 * 60 * 24) > 3);
+            return `
             <tr class="hover:bg-slate-50/80 transition-colors">
                 <td class="p-3">
                     <div class="font-bold text-slate-900 flex items-center gap-2">
                         ${c.nombre}
+                        ${requiereSeguimiento ? `<span class="bg-rose-100 text-rose-600 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase animate-pulse" title="Han pasado más de 3 días desde el último contacto">Seguimiento</span>` : ''}
                         <a href="https://wa.me/52${c.telefono.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(c.nombre)},%20te%20contacto%20de%20Century%2021..." target="_blank" onclick="mostrarNotificacion('Abriendo WhatsApp...', 'success')" class="text-green-500 hover:text-green-600 cursor-pointer" title="Contactar por WhatsApp">
                             <i data-lucide="message-circle" class="w-4 h-4"></i>
                         </a>
@@ -132,20 +225,41 @@ function aplicarFiltroClientes() {
                         <option value="Nuevo" ${c.estado_seguimiento === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
                         <option value="Contactado" ${c.estado_seguimiento === 'Contactado' ? 'selected' : ''}>Contactado</option>
                         <option value="Cerrado" ${c.estado_seguimiento === 'Cerrado' ? 'selected' : ''}>Cerrado</option>
+                        <option value="Descartado" ${c.estado_seguimiento === 'Descartado' ? 'selected' : ''}>Descartado</option>
                     </select>
-                    <button onclick="ejecutarMatchmaking(${c.id_cliente})" class="bg-slate-900 hover:bg-[--gold-primary] text-[--gold-primary] hover:text-black font-bold p-1.5 rounded-xl border border-amber-500/20 transition-all cursor-pointer active:scale-95 shadow-md" title="Matchmaking Inteligente">
+                    ${requiereSeguimiento ? `
+                    <button onclick="registrarContactoSeguimiento(${c.id_cliente}, '${c.telefono}', '${c.nombre.replace(/'/g, "\\'")}')" class="bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white font-bold p-1.5 rounded-xl border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-md" title="Enviar Seguimiento (WhatsApp)">
+                        <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                    </button>` : ''}
+                    <button onclick="ejecutarMatchmaking(${c.id_cliente})" class="bg-slate-900 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold p-1.5 rounded-xl border border-emerald-500/20 transition-all cursor-pointer active:scale-95 shadow-md" title="Matchmaking Inteligente">
                         <i data-lucide="sparkles" class="w-4 h-4"></i>
                     </button>
                 </td>
             </tr>
-        `).join('');
+        `}).join('');
     } else {
         tabla.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">No hay prospectos en este estado.</td></tr>`;
     }
     lucide.createIcons();
 }
 
+async function registrarContactoSeguimiento(id, phone, name) {
+    try {
+        await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/contacto`, { method: 'PUT', headers: { 'Authorization': `Bearer ${window.adminToken}` }});
+        const c = window.clientesGlobal.find(x => x.id_cliente === id);
+        if (c) c.fecha_ultimo_contacto = new Date().toISOString();
+        aplicarFiltroClientes();
+        
+        const texto = `Hola ${name}, te escribo de Century 21 para dar seguimiento a tu búsqueda. ¿Pudiste revisar las opciones que te envié? ¿Tienes alguna duda?`;
+        window.open(`https://wa.me/52${phone.replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`, '_blank');
+    } catch { mostrarNotificacion("Error al registrar contacto.", 'error'); }
+}
+
 async function actualizarEstadoCliente(id, estado) {
+    if (estado === 'Descartado') {
+        mostrarModalDescarte(id);
+        return;
+    }
     try {
         await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/estado`, {
             method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado })
@@ -154,6 +268,87 @@ async function actualizarEstadoCliente(id, estado) {
         if (c) c.estado_seguimiento = estado;
         aplicarFiltroClientes();
         mostrarNotificacion(`Estado cambiado a: ${estado}`, 'info');
+    } catch { mostrarNotificacion("Error al actualizar estado.", 'error'); }
+}
+
+function mostrarModalDescarte(id) {
+    const existing = document.getElementById('modalDescarteCustom');
+    if (existing) existing.remove();
+    
+    const div = document.createElement('div');
+    div.id = 'modalDescarteCustom';
+    div.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4';
+    div.innerHTML = `
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Descartar Prospecto</h3>
+            <p class="text-xs text-slate-500 mb-4">Por favor, selecciona el motivo principal por el cual se perdió este cliente para alimentar las estadísticas.</p>
+            
+            <div class="space-y-2 mb-6">
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-rose-400 hover:bg-rose-50 cursor-pointer transition-colors" onchange="document.getElementById('otroMotivoContainer').classList.add('hidden')">
+                    <input type="radio" name="motivoRadio" value="Presupuesto" class="w-4 h-4 text-rose-500 focus:ring-rose-500">
+                    <span class="text-sm font-semibold text-slate-700">Presupuesto / Precio</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-rose-400 hover:bg-rose-50 cursor-pointer transition-colors" onchange="document.getElementById('otroMotivoContainer').classList.add('hidden')">
+                    <input type="radio" name="motivoRadio" value="No era lo que buscaba" class="w-4 h-4 text-rose-500 focus:ring-rose-500">
+                    <span class="text-sm font-semibold text-slate-700">No era lo que buscaba</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-rose-400 hover:bg-rose-50 cursor-pointer transition-colors" onchange="document.getElementById('otroMotivoContainer').classList.add('hidden')">
+                    <input type="radio" name="motivoRadio" value="Solo curiosidad" class="w-4 h-4 text-rose-500 focus:ring-rose-500">
+                    <span class="text-sm font-semibold text-slate-700">Mera curiosidad</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-rose-400 hover:bg-rose-50 cursor-pointer transition-colors" onchange="document.getElementById('otroMotivoContainer').classList.remove('hidden')">
+                    <input type="radio" name="motivoRadio" value="Otro" class="w-4 h-4 text-rose-500 focus:ring-rose-500">
+                    <span class="text-sm font-semibold text-slate-700">Otro motivo...</span>
+                </label>
+                <div id="otroMotivoContainer" class="hidden pl-7 pt-2">
+                    <input type="text" id="otroMotivoInput" placeholder="Escribe el motivo..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-rose-400">
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="cancelarDescarte()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer">Cancelar</button>
+                <button onclick="confirmarDescarte(${id})" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-colors cursor-pointer">Descartar Cliente</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(div);
+}
+
+function cancelarDescarte() {
+    document.getElementById('modalDescarteCustom').remove();
+    aplicarFiltroClientes(); // Revertir el select visualmente al estado anterior
+}
+
+async function confirmarDescarte(id) {
+    const radios = document.getElementsByName('motivoRadio');
+    let motivoSeleccionado = null;
+    for (let r of radios) { if (r.checked) motivoSeleccionado = r.value; }
+    
+    if (motivoSeleccionado === 'Otro') {
+        const otroInput = document.getElementById('otroMotivoInput').value.trim();
+        if (!otroInput) {
+            mostrarNotificacion("Por favor escribe el motivo.", "error");
+            return;
+        }
+        motivoSeleccionado = otroInput;
+    } else if (!motivoSeleccionado) {
+        mostrarNotificacion("Por favor selecciona un motivo.", "error");
+        return;
+    }
+    
+    document.getElementById('modalDescarteCustom').remove();
+    
+    try {
+        await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/estado`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'Descartado', motivo: motivoSeleccionado })
+        });
+        const c = window.clientesGlobal.find(x => x.id_cliente === id);
+        if (c) {
+            c.estado_seguimiento = 'Descartado';
+            c.motivo_descarte = motivoSeleccionado;
+        }
+        aplicarFiltroClientes();
+        mostrarNotificacion(`Cliente descartado exitosamente.`, 'success');
     } catch { mostrarNotificacion("Error al actualizar estado.", 'error'); }
 }
 
@@ -167,6 +362,7 @@ async function ejecutarMatchmaking(idCliente) {
         const res = await response.json();
 
         if (res.status === "success") {
+            window.ultimoMatch = res;
             document.getElementById("modalClienteNombre").innerText = `Análisis de Match para: ${res.cliente.nombre}`;
             contenedorExactas.innerHTML = res.coincidencias_exactas.length === 0 ? `<p class="text-slate-400 text-xs col-span-2 italic">No hay propiedades exactas disponibles.</p>` : res.coincidencias_exactas.map(p => generarTarjetaPropiedad(p)).join('');
             contenedorAlternativas.innerHTML = res.alternativas_fuera_presupuesto.length === 0 ? `<p class="text-slate-400 text-xs col-span-2 italic">No hay alternativas que ofrecer en este rango.</p>` : res.alternativas_fuera_presupuesto.map(p => generarTarjetaPropiedad(p)).join('');
@@ -176,6 +372,38 @@ async function ejecutarMatchmaking(idCliente) {
     } catch (error) {
         alert("Error al ejecutar el algoritmo de cruce.");
     }
+}
+
+function enviarOpcionesWhatsapp() {
+    if (!window.ultimoMatch) return;
+    const m = window.ultimoMatch;
+    let texto = `Hola ${m.cliente.nombre}, analicé tu perfil y tengo excelentes opciones en ${m.cliente.zona_interes}:\n\n`;
+    
+    m.coincidencias_exactas.slice(0, 3).forEach((p, i) => {
+        const detalles = [];
+        if (p.recamaras) detalles.push(`${p.recamaras} Rec`);
+        if (p.banos_completos) detalles.push(`${p.banos_completos} Baños`);
+        const desc = detalles.length > 0 ? ` (${detalles.join(', ')})` : '';
+        
+        texto += `${i+1}. ${p.tipo_propiedad} en ${p.zona}${desc} - $${parseFloat(p.precio).toLocaleString('es-MX')}\n`;
+    });
+    
+    if (m.alternativas_fuera_presupuesto.length > 0) {
+        texto += `\nTambién tengo estas alternativas premium:\n`;
+        m.alternativas_fuera_presupuesto.slice(0, 2).forEach((p, i) => {
+            const detalles = [];
+            if (p.recamaras) detalles.push(`${p.recamaras} Rec`);
+            if (p.banos_completos) detalles.push(`${p.banos_completos} Baños`);
+            const desc = detalles.length > 0 ? ` (${detalles.join(', ')})` : '';
+            
+            texto += `- ${p.tipo_propiedad} en ${p.zona}${desc} - $${parseFloat(p.precio).toLocaleString('es-MX')}\n`;
+        });
+    }
+    
+    texto += `\n¿Te gustaría agendar una cita para ver alguna?`;
+    
+    const phone = m.cliente.telefono.replace(/\D/g, '');
+    window.open(`https://wa.me/52${phone}?text=${encodeURIComponent(texto)}`, '_blank');
 }
 
 function generarTarjetaPropiedad(p) {

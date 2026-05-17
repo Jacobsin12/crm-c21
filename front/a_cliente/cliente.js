@@ -12,9 +12,8 @@
             html: `
                 <div class="text-center space-y-6 py-2">
                     <div class="flex justify-center mb-2">
-                        <div class="bg-white border border-slate-200 px-6 py-3 rounded-2xl flex items-center gap-2 shadow-sm">
-                            <i data-lucide="building-2" class="text-[var(--gold-primary)] w-5 h-5 animate-pulse"></i>
-                            <span class="font-bold tracking-wider text-sm text-[var(--text-dark)]">Century 21 AFE Group</span>
+                        <div class="bg-white border border-slate-200 px-6 py-3 rounded-2xl flex items-center justify-center shadow-sm">
+                            <img src="../assets/icons/c21.png" alt="Century 21" class="h-6 object-contain">
                         </div>
                     </div>
 
@@ -26,7 +25,7 @@
                     </div>
 
                     <div class="space-y-1">
-                        <h1 class="text-2xl font-bold tracking-tight text-[var(--text-dark)]">Maria Cecilia Ramirez Gonzalez</h1>
+                        <h1 class="text-2xl font-bold tracking-tight text-[var(--text-dark)]"> Cecilia Ramirez</h1>
                         <p class="text-[var(--gold-dark)] text-xs font-semibold uppercase tracking-widest">Gerente de Ventas y Alianzas Comerciales</p>
                     </div>
 

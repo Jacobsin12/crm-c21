@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../assets/icons/c21.png">
+    <title>Reportes | Sweethome Compass Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="../assets/css/global.css">
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="custom-bg min-h-screen text-slate-100 font-sans antialiased p-6">
+
+    <main class="max-w-6xl mx-auto animate-fade-in">
+        <div class="luxury-card !m-0 !max-w-none">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="text-[--gold-primary] w-5 h-5"></i>
+                    <h2 class="text-lg font-bold text-slate-900">Métricas y Reportes de Rendimiento</h2>
+                </div>
+             <button onclick="generarReportePDF()" id="btnDescargarPDF" class="bg-[--gold-primary] hover:brightness-110 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95">
+    <i data-lucide="download" class="w-4 h-4"></i> Descargar Reporte (PDF)
+</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="contenedorGraficasPDF">
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Estado del Embudo</h3>
+                    <canvas id="chartEstados"></canvas>
+                </div>
+                
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Top 5 Zonas Solicitadas</h3>
+                    <canvas id="chartZonas"></canvas>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Motivos de Descarte</h3>
+                    <canvas id="chartPerdidas"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="navbar.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            renderLuxuryNavbar('reportes');
+            cargarEstadisticas();
+        });
+
+        async function cargarEstadisticas() {
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/admin/estadisticas`, {
+                    headers: { 'Authorization': `Bearer ${window.adminToken}` }
+                }).then(r => r.json());
+
+                // Grafica Estados
+                new Chart(document.getElementById('chartEstados'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: res.estados.map(e => e.estado_seguimiento),
+                        datasets: [{
+                            data: res.estados.map(e => e.total),
+                            backgroundColor: ['#f8fafc', '#fef3c7', '#dcfce7', '#ffe4e6'],
+                            borderColor: ['#cbd5e1', '#f59e0b', '#22c55e', '#e11d48'],
+                            borderWidth: 1
+                        }]
+                    }
+                });
+
+                // Grafica Zonas
+                new Chart(document.getElementById('chartZonas'), {
+                    type: 'bar',
+                    data: {
+                        labels: res.zonas.map(z => z.zona_interes),
+                        datasets: [{
+                            label: 'Prospectos',
+                            data: res.zonas.map(z => z.total),
+                            backgroundColor: '#b89868', // Gold
+                            borderRadius: 4
+                        }]
+                    }
+                });
+
+                // Grafica Perdidas
+                new Chart(document.getElementById('chartPerdidas'), {
+                    type: 'pie',
+                    data: {
+                        labels: res.perdidas.map(p => p.motivo_descarte || 'No especificado'),
+                        datasets: [{
+                            data: res.perdidas.map(p => p.total),
+                            backgroundColor: ['#e2e8f0', '#94a3b8', '#64748b', '#475569'],
+                            borderWidth: 0
+                        }]
+                    }
+                });
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function generarReportePDF() {
+            const btn = document.getElementById('btnDescargarPDF');
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Generando...`;
+            btn.disabled = true;
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = doc.internal.pageSize.getWidth();
+                
+                // Add Logo
+                const logoObj = new Image();
+                logoObj.src = '../assets/icons/c21.png';
+                await new Promise(r => { logoObj.onload = r; logoObj.onerror = r; });
+                
+                // Header background
+                doc.setFillColor(15, 23, 42); // slate-900
+                doc.rect(0, 0, pageWidth, 40, 'F');
+                
+                // Logo & Text
+                if(logoObj.width > 0) {
+                    doc.addImage(logoObj, 'PNG', 15, 8, 24, 24);
+                }
+                
+                doc.setTextColor(255, 255, 255);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.text("REPORTE EJECUTIVO", 45, 18);
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(203, 163, 101); // gold
+                doc.text("Century 21 - Rendimiento y Prospectos", 45, 25);
+                
+                const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(9);
+                doc.text(`Fecha: ${fecha}`, pageWidth - 15, 25, { align: 'right' });
+
+                // Capture charts using html-to-image
+                const content = document.getElementById('contenedorGraficasPDF');
+                const imgData = await htmlToImage.toPng(content, { backgroundColor: '#ffffff', pixelRatio: 2 });
+                
+                // Calculate dimensions to fit in A4
+                // A4 is 210mm wide. Content pixel width can vary.
+                const imgProps = doc.getImageProperties(imgData);
+                const margin = 15;
+                const imgWidth = pageWidth - (margin * 2);
+                const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+                
+                doc.addImage(imgData, 'PNG', margin, 50, imgWidth, imgHeight);
+                
+                // Footer
+                doc.setTextColor(148, 163, 184); // slate-400
+                doc.setFontSize(8);
+                doc.text("Generado automáticamente por Sweethome Compass CRM", pageWidth / 2, 280, { align: 'center' });
+
+                doc.save(`Reporte_C21_${new Date().toISOString().split('T')[0]}.pdf`);
+                
+            } catch (error) {
+                console.error("Error al generar PDF", error);
+                alert("Hubo un error al generar el PDF: " + error.message);
+            } finally {
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+    </script>
+    <script src="../assets/js/api.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

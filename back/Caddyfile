@@ -1,0 +1,3 @@
+c21mcrg.duckdns.org {
+    reverse_proxy localhost:3000
+}

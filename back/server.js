@@ -8,6 +8,13 @@ const fs = require('fs');
 
 require('dotenv').config();
 const { google } = require('googleapis');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const webpush = require('web-push');
+
+const publicVapidKey = process.env.VAPID_PUBLIC_KEY;
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
+webpush.setVapidDetails(process.env.VAPID_MAILTO || 'mailto:soporte@century21.com', publicVapidKey, privateVapidKey);
 
 // ==========================================
 // CONFIGURACIÓN DE GOOGLE CALENDAR API
@@ -26,11 +33,22 @@ if (fs.existsSync(TOKEN_PATH)) {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors()); 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ==========================================
+// ENMASCARAMIENTO DE RUTAS (URLs Limpias)
+// ==========================================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../front/a_cliente/index.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, '../front/a_admin/index.html'));
+});
 
 // Servir la carpeta del frontend como archivos estáticos para evitar errores de CORS y Service Worker en origin 'null'
 app.use(express.static(path.join(__dirname, '../front')));
@@ -67,13 +85,95 @@ const upload = multer({
 // CONEXIÓN A TU MYSQL LOCAL
 // ==========================================
 const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '0512', 
-    database: 'crm_inmobiliario',
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASS || '', 
+    database: process.env.DB_NAME || 'crm_inmobiliario',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
+});
+
+// ==========================================
+// RUTA DE LOGIN (NO PROTEGIDA)
+// ==========================================
+app.post('/api/admin/login', async (req, res) => {
+    const { usuario_o_correo, password } = req.body;
+    if (!usuario_o_correo || !password) {
+        return res.status(400).json({ status: 'error', message: 'Faltan credenciales.' });
+    }
+
+    try {
+        const query = 'SELECT * FROM usuarios WHERE username = ? OR correo = ?';
+        db.execute(query, [usuario_o_correo, usuario_o_correo], async (err, results) => {
+            if (err) return res.status(500).json({ status: 'error', message: 'Error de base de datos.' });
+            
+            if (results.length === 0) {
+                return res.status(401).json({ status: 'error', message: 'Usuario incorrecto.' });
+            }
+
+            const user = results[0];
+
+            if (user.estado === 'inactivo') {
+                return res.status(403).json({ status: 'error', message: 'Tu cuenta está inactiva. Contacta al administrador.' });
+            }
+
+            const validPassword = await bcrypt.compare(password, user.password_hash);
+            
+            if (!validPassword) {
+                return res.status(401).json({ status: 'error', message: 'Contraseña incorrecta.' });
+            }
+
+            const token = jwt.sign(
+                { id: user.id, username: user.username, rol: user.rol, nombre_completo: user.nombre_completo }, 
+                process.env.JWT_SECRET, 
+                { expiresIn: '24h' }
+            );
+            
+            res.json({ status: 'success', token, message: 'Login exitoso' });
+        });
+    } catch (e) {
+        res.status(500).json({ status: 'error', message: 'Error interno del servidor.' });
+    }
+});
+
+// ==========================================
+// MIDDLEWARE DE PROTECCIÓN PARA TODAS LAS RUTAS ADMIN
+// ==========================================
+const verificarToken = (req, res, next) => {
+    let token = req.headers['authorization'];
+    if (token && token.startsWith('Bearer ')) {
+        token = token.slice(7, token.length);
+    } else if (req.query.token) {
+        token = req.query.token;
+    }
+
+    if (!token) {
+        return res.status(401).json({ status: 'unauthorized', message: 'Acceso denegado. Se requiere iniciar sesión.' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'century21_secreto_super_seguro_2026');
+        req.usuario = decoded;
+        next();
+    } catch (ex) {
+        res.status(401).json({ status: 'unauthorized', message: 'Sesión expirada o token inválido.' });
+    }
+};
+
+app.use('/api/admin', verificarToken);
+
+// ==========================================
+// PUSH NOTIFICATIONS SUBSCRIPTION
+// ==========================================
+app.post('/api/admin/push/subscribe', (req, res) => {
+    const subscription = req.body;
+    const userId = req.usuario.id;
+    const q = 'UPDATE usuarios SET push_subscription = ? WHERE id = ?';
+    db.execute(q, [JSON.stringify(subscription), userId], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: 'Subscribed successfully' });
+    });
 });
 
 // ==========================================
@@ -148,6 +248,25 @@ app.post('/api/clientes/perfilar', (req, res) => {
             console.error("❌ Error al guardar perfilamiento:", err.message);
             return res.status(500).json({ status: 'error', message: 'Error interno al guardar los datos.' });
         }
+
+        // Enviar Push a los administradores
+        db.query('SELECT push_subscription FROM usuarios WHERE push_subscription IS NOT NULL', (err, rows) => {
+            if (!err && rows && rows.length > 0) {
+                const payload = JSON.stringify({
+                    title: '¡Nuevo Prospecto!',
+                    body: `${nombre} busca un(a) ${tipo_propiedad} en ${zona_interes}`,
+                    icon: '/assets/icons/c21.png',
+                    data: { url: '/a_admin/clientes.html' }
+                });
+                rows.forEach(row => {
+                    try {
+                        const sub = typeof row.push_subscription === 'string' ? JSON.parse(row.push_subscription) : row.push_subscription;
+                        webpush.sendNotification(sub, payload).catch(e => console.error("Error al enviar Push:", e.message));
+                    } catch(e) { console.error("Error parsing subscription:", e); }
+                });
+            }
+        });
+
         res.json({ status: 'success', message: '¡Perfilamiento registrado con éxito! Tu asesor se comunicará contigo.' });
     });
 });
@@ -162,6 +281,26 @@ app.get('/api/admin/clientes', (req, res) => {
             return res.status(500).json({ status: 'error', message: 'Error al consultar clientes.' });
         }
         res.json({ status: 'success', data: results });
+    });
+});
+
+// ==========================================
+// RUTA DE ESTADÍSTICAS (ANALYTICS)
+// ==========================================
+app.get('/api/admin/estadisticas', (req, res) => {
+    const q1 = "SELECT estado_seguimiento, COUNT(*) as total FROM clientes_prospectos GROUP BY estado_seguimiento";
+    const q2 = "SELECT zona_interes, COUNT(*) as total FROM clientes_prospectos GROUP BY zona_interes ORDER BY total DESC LIMIT 5";
+    const q3 = "SELECT motivo_descarte, COUNT(*) as total FROM clientes_prospectos WHERE estado_seguimiento = 'Descartado' GROUP BY motivo_descarte";
+    
+    db.query(q1, (err, res1) => {
+        if(err) return res.status(500).json({error: err.message});
+        db.query(q2, (err, res2) => {
+            if(err) return res.status(500).json({error: err.message});
+            db.query(q3, (err, res3) => {
+                if(err) return res.status(500).json({error: err.message});
+                res.json({ estados: res1, zonas: res2, perdidas: res3 });
+            });
+        });
     });
 });
 
@@ -292,10 +431,28 @@ app.put('/api/admin/propiedades/:id/estatus', (req, res) => {
 // ==========================================
 app.put('/api/admin/clientes/:id/estado', (req, res) => {
     const { id } = req.params;
-    const { estado } = req.body;
-    db.query("UPDATE clientes_prospectos SET estado_seguimiento = ? WHERE id_cliente = ?", [estado, id], (err) => {
-        if (err) return res.status(500).json({ status: 'error', message: 'Error al actualizar estado del cliente.' });
+    const { estado, motivo } = req.body;
+    let query = 'UPDATE clientes_prospectos SET estado_seguimiento = ? WHERE id_cliente = ?';
+    let params = [estado, id];
+    
+    if (estado === 'Descartado') {
+        query = 'UPDATE clientes_prospectos SET estado_seguimiento = ?, motivo_descarte = ? WHERE id_cliente = ?';
+        params = [estado, motivo || 'Otro', id];
+    } else {
+        query = 'UPDATE clientes_prospectos SET estado_seguimiento = ?, motivo_descarte = NULL WHERE id_cliente = ?';
+    }
+
+    db.query(query, params, (err) => {
+        if (err) return res.status(500).json({ error: err.message });
         res.json({ status: 'success', message: 'Estado actualizado' });
+    });
+});
+
+app.put('/api/admin/clientes/:id/contacto', (req, res) => {
+    const { id } = req.params;
+    db.query('UPDATE clientes_prospectos SET fecha_ultimo_contacto = CURRENT_TIMESTAMP WHERE id_cliente = ?', [id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ status: 'success' });
     });
 });
 
@@ -352,7 +509,7 @@ app.get('/api/admin/calendario', async (req, res) => {
         const response = await calendar.events.list({
             calendarId: 'primary',
             timeMin: (new Date()).toISOString(),
-            maxResults: 15,
+            maxResults: 250,
             singleEvents: true,
             orderBy: 'startTime',
         });
@@ -373,6 +530,12 @@ app.post('/api/admin/calendario', async (req, res) => {
     }
 
     const { summary, description, location, startDateTime, endDateTime } = req.body;
+
+    const fechaCita = new Date(startDateTime);
+    const ahora = new Date();
+    if (fechaCita < ahora) {
+        return res.status(400).json({ status: 'error', message: 'No puedes agendar una cita en una fecha u hora del pasado.' });
+    }
 
     try {
         const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
@@ -407,6 +570,71 @@ app.post('/api/admin/calendario', async (req, res) => {
     } catch (error) {
         console.error('Error creating event:', error);
         res.status(500).json({ status: 'error', message: 'Error al crear la cita en Google Calendar.' });
+    }
+});
+
+// ==========================================
+// RUTA 11: EDITAR CITA EN GOOGLE CALENDAR
+// ==========================================
+app.put('/api/admin/calendario/:id', async (req, res) => {
+    if (!fs.existsSync(TOKEN_PATH)) {
+        return res.json({ status: 'unauthorized', message: 'No has iniciado sesión con Google.' });
+    }
+
+    const eventId = req.params.id;
+    const { summary, description, location, startDateTime, endDateTime } = req.body;
+
+    const fechaCita = new Date(startDateTime);
+    const ahora = new Date();
+    if (fechaCita < ahora) {
+        return res.status(400).json({ status: 'error', message: 'No puedes reprogramar a una fecha del pasado.' });
+    }
+
+    try {
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+        
+        const event = {
+            summary: summary,
+            location: location,
+            description: description,
+            start: { dateTime: startDateTime, timeZone: 'America/Mexico_City' },
+            end: { dateTime: endDateTime, timeZone: 'America/Mexico_City' }
+        };
+
+        const response = await calendar.events.update({
+            calendarId: 'primary',
+            eventId: eventId,
+            resource: event,
+        });
+
+        res.json({ status: 'success', message: 'Cita actualizada exitosamente.', data: response.data });
+    } catch (error) {
+        console.error('Error updating event:', error);
+        res.status(500).json({ status: 'error', message: 'Error al actualizar la cita.' });
+    }
+});
+
+// ==========================================
+// RUTA 12: ELIMINAR CITA EN GOOGLE CALENDAR
+// ==========================================
+app.delete('/api/admin/calendario/:id', async (req, res) => {
+    if (!fs.existsSync(TOKEN_PATH)) {
+        return res.json({ status: 'unauthorized', message: 'No has iniciado sesión con Google.' });
+    }
+
+    const eventId = req.params.id;
+
+    try {
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+        await calendar.events.delete({
+            calendarId: 'primary',
+            eventId: eventId,
+        });
+
+        res.json({ status: 'success', message: 'Cita eliminada exitosamente.' });
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        res.status(500).json({ status: 'error', message: 'Error al eliminar la cita.' });
     }
 });
 

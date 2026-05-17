@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -25,6 +25,7 @@
                         <option value="Nuevo">Nuevos (Sin Contactar)</option>
                         <option value="Contactado">Contactados / En Seguimiento</option>
                         <option value="Cerrado">Cerrados</option>
+                        <option value="Descartado">Descartados / Perdidos</option>
                     </select>
                     <button onclick="cargarClientes()" class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
                         <i data-lucide="rotate-cw" class="w-4 h-4"></i>
@@ -37,7 +38,7 @@
                     <thead class="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-100">
                         <tr>
                             <th class="p-3">Nombre / Contacto</th>
-                            <th class="p-3">BÃºsqueda</th>
+                            <th class="p-3">Búsqueda</th>
                             <th class="p-3">Presupuesto / Zonas</th>
                             <th class="p-3 text-center">Match</th>
                         </tr>
@@ -55,9 +56,14 @@
             <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-4">
                 <div>
                     <span class="text-[10px] font-bold uppercase tracking-wider text-[--gold-primary]">Algoritmo Inmobiliario</span>
-                    <h3 id="modalClienteNombre" class="text-lg font-bold text-slate-900">AnÃ¡lisis de Coincidencias</h3>
+                    <h3 id="modalClienteNombre" class="text-lg font-bold text-slate-900">Análisis de Coincidencias</h3>
                 </div>
-                <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div class="flex items-center gap-3">
+                    <button onclick="enviarOpcionesWhatsapp()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer border border-emerald-200">
+                        <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> Enviar por WhatsApp
+                    </button>
+                    <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
             </div>
             <div class="space-y-6">
                 <div>
@@ -73,9 +79,9 @@
     </div>
 
     <script src="navbar.js"></script>
-    <script>renderLuxuryNavbar('clientes');</script>
     <script src="../assets/js/api.js"></script>
     <script src="admin.js"></script>
+    <script>renderLuxuryNavbar('clientes');</script>
     <script>cargarClientes();</script>
 </body>
 </html>

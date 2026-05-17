@@ -1,14 +1,22 @@
 {
-  "name": "CRM Inmobiliario C21",
+  "name": "CRM Century 21",
   "short_name": "CRM C21",
-  "start_url": "./cliente/index.html",
+  "description": "Panel de Administración Century 21",
+  "start_url": "/admin",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#020617",
-  "theme_color": "#4f46e5",
+  "theme_color": "#b89868",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/609/609034.png",
+      "src": "/assets/icons/c21.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/c21.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"

@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../front/a_admin/index.html'));
+    res.redirect('/admin/clientes.html');
 });
 
 // Servir la carpeta del frontend como archivos estáticos para evitar errores de CORS y Service Worker en origin 'null'

@@ -1,7 +1,37 @@
 // ==========================================
+// FUNCIONES AUXILIARES PARA COOKIES (BLINDAJE IPHONE)
+// ==========================================
+function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; Secure; SameSite=Strict";
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+function eraseCookie(name) {   
+    document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict';
+}
+
+// ==========================================
 // SEGURIDAD / LOGIN GLOBAL
 // ==========================================
-window.adminToken = localStorage.getItem('adminToken');
+// Intentar leer de cookie primero (iPhone), si no, fallback a localStorage
+window.adminToken = getCookie('adminToken') || localStorage.getItem('adminToken');
+
 if (!window.location.pathname.includes('login.html')) {
     if (!window.adminToken) {
         window.location.href = 'login.html';
@@ -14,8 +44,14 @@ if (!window.location.pathname.includes('login.html')) {
                     nombreEl.innerText = window.usuarioActual.nombre_completo || window.usuarioActual.username || 'Usuario';
                 }
             });
+            
+            // Asegurar que ambos almacenes tengan el token por si acaso
+            if (!getCookie('adminToken')) setCookie('adminToken', window.adminToken, 365);
+            if (!localStorage.getItem('adminToken')) localStorage.setItem('adminToken', window.adminToken);
+
         } catch (e) {
             localStorage.removeItem('adminToken');
+            eraseCookie('adminToken');
             window.location.href = 'login.html';
         }
     }
@@ -33,6 +69,7 @@ window.fetch = async function() {
         const response = await originalFetch(resource, config);
         if (response.status === 401) {
             localStorage.removeItem('adminToken');
+            eraseCookie('adminToken');
             window.location.href = 'login.html';
         }
         return response;

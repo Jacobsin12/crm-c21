@@ -1,46 +1,154 @@
 function renderLuxuryNavbar(activePage) {
-    const header = document.createElement('header');
-    header.className = "max-w-6xl mx-auto mb-8 flex flex-col md:flex-row justify-between items-center pb-5 gap-4";
+    const nombreAsesor = window.usuarioActual ? (window.usuarioActual.nombre_completo || window.usuarioActual.username || 'Usuario') : 'Usuario';
     
-    header.innerHTML = `
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-amber-500/30 flex items-center justify-center text-[--gold-primary] shadow-sm">
-                <i data-lucide="shield-check" class="w-5 h-5"></i>
+    // Contenedor principal que se inyectará al inicio del body
+    const headerWrapper = document.createElement('div');
+
+    headerWrapper.innerHTML = `
+        <!-- TOP HEADER -->
+        <header class="max-w-6xl mx-auto mb-6 md:mb-8 flex justify-between items-center pb-4 md:pb-5 border-b border-slate-100 md:border-slate-200 gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 border border-amber-500/30 flex items-center justify-center text-[--gold-primary] shadow-sm">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-[--gold-primary]">Consola Corporativa</span>
+                    <h1 class="text-lg font-bold tracking-tight text-slate-900">Century 21</h1>
+                </div>
             </div>
-            <div>
-                <span class="text-[9px] font-bold uppercase tracking-widest text-[--gold-primary]">Consola Corporativa</span>
-                <h1 class="text-lg font-bold tracking-tight text-slate-900">Century 21</h1>
+            
+            <!-- DESKTOP NAVIGATION -->
+            <nav class="hidden md:flex flex-wrap justify-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner">
+                <a href="clientes.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'clientes' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
+                    <i data-lucide="users" class="inline w-3.5 h-3.5 mr-1"></i> Prospectos
+                </a>
+                <a href="inventario.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'inventario' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
+                    <i data-lucide="home" class="inline w-3.5 h-3.5 mr-1"></i> Inventario
+                </a>
+                <a href="cargar.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'cargar' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
+                    <i data-lucide="file-up" class="inline w-3.5 h-3.5 mr-1"></i> Subir PDFs
+                </a>
+                <a href="calendario.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'calendario' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
+                    <i data-lucide="calendar" class="inline w-3.5 h-3.5 mr-1"></i> Agenda
+                </a>
+                <a href="reportes.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'reportes' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
+                    <i data-lucide="bar-chart-3" class="inline w-3.5 h-3.5 mr-1"></i> Reportes
+                </a>
+            </nav>
+
+            <!-- DESKTOP USER INFO -->
+            <div class="hidden md:flex items-center gap-4 text-right text-xs text-slate-500 font-medium">
+                <span>Asesor: <span class="text-slate-900 font-semibold">${nombreAsesor}</span></span>
+                <button onclick="cerrarSesion()" class="text-rose-500 hover:text-white hover:bg-rose-500 px-3 py-1.5 rounded-lg font-bold border border-rose-200 transition-all cursor-pointer">
+                    Cerrar Sesión
+                </button>
             </div>
-        </div>
-        
-        <nav class="flex flex-wrap justify-center md:justify-start gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/80 shadow-inner w-full md:w-auto">
-            <a href="clientes.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'clientes' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
-                <i data-lucide="users" class="inline w-3.5 h-3.5 mr-1"></i> Prospectos
+
+            <!-- MOBILE HAMBURGER -->
+            <button onclick="toggleMobileMenu()" class="md:hidden w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-sm cursor-pointer transition-colors active:scale-95">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+        </header>
+
+        <!-- MOBILE BOTTOM NAVIGATION (Pill Style) -->
+        <nav class="md:hidden fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl border border-slate-200 shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-[2rem] px-4 py-2 flex justify-between items-center z-40">
+            <a href="clientes.html" class="relative flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${activePage === 'clientes' ? 'text-[--gold-primary]' : 'text-slate-400 hover:text-slate-600'}">
+                ${activePage === 'clientes' ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[--gold-primary] rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"></div>' : ''}
+                <i data-lucide="users" class="w-5 h-5 mb-1 ${activePage === 'clientes' ? 'scale-110' : ''} transition-transform"></i>
+                <span class="text-[9px] font-bold">Clientes</span>
             </a>
-            <a href="inventario.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'inventario' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
-                <i data-lucide="home" class="inline w-3.5 h-3.5 mr-1"></i> Inventario
+            <a href="inventario.html" class="relative flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${activePage === 'inventario' ? 'text-[--gold-primary]' : 'text-slate-400 hover:text-slate-600'}">
+                ${activePage === 'inventario' ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[--gold-primary] rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"></div>' : ''}
+                <i data-lucide="home" class="w-5 h-5 mb-1 ${activePage === 'inventario' ? 'scale-110' : ''} transition-transform"></i>
+                <span class="text-[9px] font-bold">Inventario</span>
             </a>
-            <a href="cargar.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'cargar' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
-                <i data-lucide="file-up" class="inline w-3.5 h-3.5 mr-1"></i> Subir PDFs
+            <a href="cargar.html" class="relative flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${activePage === 'cargar' ? 'text-[--gold-primary]' : 'text-slate-400 hover:text-slate-600'}">
+                ${activePage === 'cargar' ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[--gold-primary] rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"></div>' : ''}
+                <i data-lucide="file-up" class="w-5 h-5 mb-1 ${activePage === 'cargar' ? 'scale-110' : ''} transition-transform"></i>
+                <span class="text-[9px] font-bold">Subir</span>
             </a>
-            <a href="calendario.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'calendario' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
-                <i data-lucide="calendar" class="inline w-3.5 h-3.5 mr-1"></i> Agenda
+            <a href="calendario.html" class="relative flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${activePage === 'calendario' ? 'text-[--gold-primary]' : 'text-slate-400 hover:text-slate-600'}">
+                ${activePage === 'calendario' ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[--gold-primary] rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"></div>' : ''}
+                <i data-lucide="calendar" class="w-5 h-5 mb-1 ${activePage === 'calendario' ? 'scale-110' : ''} transition-transform"></i>
+                <span class="text-[9px] font-bold">Agenda</span>
             </a>
-            <a href="reportes.html" class="px-4 py-2 rounded-xl text-xs font-bold transition-all ${activePage === 'reportes' ? 'bg-[--gold-primary] text-black shadow-md' : 'text-slate-500 hover:text-slate-900 hover:bg-white'}">
-                <i data-lucide="bar-chart-3" class="inline w-3.5 h-3.5 mr-1"></i> Reportes
+            <a href="reportes.html" class="relative flex flex-col items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${activePage === 'reportes' ? 'text-[--gold-primary]' : 'text-slate-400 hover:text-slate-600'}">
+                ${activePage === 'reportes' ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[--gold-primary] rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"></div>' : ''}
+                <i data-lucide="bar-chart-3" class="w-5 h-5 mb-1 ${activePage === 'reportes' ? 'scale-110' : ''} transition-transform"></i>
+                <span class="text-[9px] font-bold">Reportes</span>
             </a>
         </nav>
 
-        <div class="hidden md:flex items-center gap-4 text-right text-xs text-slate-500 font-medium">
-            <span>Asesor: <span class="text-slate-900 font-semibold">${window.usuarioActual ? (window.usuarioActual.nombre_completo || window.usuarioActual.username || 'Usuario') : 'Usuario'}</span></span>
-            <button onclick="cerrarSesion()" class="text-rose-500 hover:text-white hover:bg-rose-500 px-3 py-1.5 rounded-lg font-bold border border-rose-200 transition-all cursor-pointer">
-                Cerrar Sesión
+        <!-- MOBILE SIDEBAR MENU -->
+        <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
+        <div id="mobileMenuSidebar" class="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col p-6 rounded-l-3xl">
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-[--gold-primary]"></i>
+                    <h3 class="font-bold text-slate-900">Ajustes</h3>
+                </div>
+                <button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-slate-600 p-2 -mr-2 cursor-pointer bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="flex flex-col items-center mb-8 bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <div class="w-16 h-16 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 mb-3 shadow-sm">
+                    <i data-lucide="user" class="w-8 h-8"></i>
+                </div>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Asesor Century 21</p>
+                <p class="text-base font-bold text-slate-900 text-center">${nombreAsesor}</p>
+            </div>
+
+            <div class="space-y-3 flex-1">
+                <button onclick="if(typeof suscribirPush === 'function') { suscribirPush(); toggleMobileMenu(); } else { alert('Notificaciones no disponibles aquí.'); }" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-amber-50/50 border border-amber-500/20 text-slate-800 hover:bg-amber-50 transition-colors cursor-pointer text-sm font-bold shadow-sm">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-[--gold-dark]">
+                        <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                    </div>
+                    Activar Notificaciones
+                </button>
+            </div>
+
+            <button onclick="cerrarSesion()" class="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-500 hover:text-white transition-all cursor-pointer text-sm font-bold mt-auto shadow-sm active:scale-95">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
             </button>
         </div>
     `;
     
-    document.body.insertBefore(header, document.body.firstChild);
-    lucide.createIcons();
+    // Insertamos todo al inicio del body
+    while (headerWrapper.firstChild) {
+        document.body.insertBefore(headerWrapper.firstChild, document.body.firstChild);
+    }
+    
+    // Agregar padding al body para que el contenido no quede debajo de la navbar flotante en móvil
+    document.body.classList.add('pb-28', 'md:pb-6');
+
+    if(window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function toggleMobileMenu() {
+    const overlay = document.getElementById('mobileMenuOverlay');
+    const sidebar = document.getElementById('mobileMenuSidebar');
+    
+    if (sidebar.classList.contains('translate-x-full')) {
+        // Abrir
+        overlay.classList.remove('hidden');
+        // Pequeño delay para que la transición de opacidad funcione
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            sidebar.classList.remove('translate-x-full');
+        });
+    } else {
+        // Cerrar
+        overlay.classList.add('opacity-0');
+        sidebar.classList.add('translate-x-full');
+        // Esperar a que termine la animación para ocultar el div
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+    }
 }
 
 function cerrarSesion() {

@@ -17,13 +17,13 @@ const run = async () => {
                 id_cliente INT NOT NULL,
                 id_propiedad VARCHAR(50),
                 precio_venta DECIMAL(14,2) NOT NULL,
+                comision DECIMAL(14,2) NULL,
                 tipo_operacion VARCHAR(50) DEFAULT 'Venta',
                 fecha_cierre TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 notas TEXT,
                 registrado_por INT
             );
-        `);
-        console.log('✅ Tabla ventas_cerradas creada (o ya existía).');
+        `);        console.log('✅ Tabla ventas_cerradas creada (o ya existía).');
 
         // 2. Agregar columna fecha_cierre a clientes_prospectos si no existe
         try {
@@ -34,6 +34,19 @@ const run = async () => {
         } catch (e) {
             if (e.code === 'ER_DUP_FIELDNAME') {
                 console.log('ℹ️  Columna fecha_cierre ya existía en clientes_prospectos.');
+            } else {
+                throw e;
+            }
+        }
+
+        try {
+            await db.promise().query(`
+                ALTER TABLE ventas_cerradas ADD COLUMN IF NOT EXISTS comision DECIMAL(14,2) NULL;
+            `);
+            console.log('✅ Columna comision agregada a ventas_cerradas.');
+        } catch (e) {
+            if (e.code === 'ER_DUP_FIELDNAME') {
+                console.log('ℹ️  Columna comision ya existía en ventas_cerradas.');
             } else {
                 throw e;
             }

@@ -783,7 +783,12 @@ async function mostrarModalCierre(idCliente) {
                 <div>
                     <label class="text-xs font-bold text-slate-600 mb-1 block">Precio de venta (MXN) *</label>
                     <input type="number" id="cierrePrecio" placeholder="Ej. 2500000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" required>
-                    <p class="text-[10px] text-slate-400 mt-1">Tu comisión (3.5%): <span id="cierreComisionPreview" class="font-bold text-emerald-600">$0</span></p>
+                    <p class="text-[10px] text-slate-400 mt-1">Comisión estimada (3.5%): <span id="cierreComisionPreview" class="font-bold text-emerald-600">$0</span></p>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">Comisión asignada (MXN)</label>
+                    <input type="number" id="cierreComision" placeholder="Ej. 87500" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" min="0">
+                    <p class="text-[10px] text-slate-400 mt-1">Si no etiquetas un monto, se usará 3.5% del precio.</p>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-600 mb-1 block">Tipo de operación</label>
@@ -810,10 +815,22 @@ async function mostrarModalCierre(idCliente) {
     if (window.lucide) lucide.createIcons();
 
     // Auto-update commission preview
-    document.getElementById('cierrePrecio').addEventListener('input', (e) => {
-        const precio = parseFloat(e.target.value) || 0;
-        document.getElementById('cierreComisionPreview').textContent = '$' + (precio * 0.035).toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-    });
+    const cierrePrecioInput = document.getElementById('cierrePrecio');
+    const cierreComisionInput = document.getElementById('cierreComision');
+    const cierreComisionPreview = document.getElementById('cierreComisionPreview');
+
+    function updateCierreComisionPreview() {
+        const precio = parseFloat(cierrePrecioInput.value) || 0;
+        const comisionManual = parseFloat(cierreComisionInput.value);
+        if (!Number.isNaN(comisionManual) && comisionManual >= 0) {
+            cierreComisionPreview.textContent = '$' + comisionManual.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            return;
+        }
+        cierreComisionPreview.textContent = '$' + (precio * 0.035).toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    }
+
+    cierrePrecioInput.addEventListener('input', updateCierreComisionPreview);
+    cierreComisionInput.addEventListener('input', updateCierreComisionPreview);
 }
 
 function autoFillPrecio() {
@@ -841,6 +858,8 @@ async function confirmarCierre(idCliente) {
     const idPropiedad = document.getElementById('cierrePropiedad').value || null;
     const tipoOp = document.getElementById('cierreTipoOp').value;
     const notas = document.getElementById('cierreNotas').value.trim() || null;
+    const comisionInput = parseFloat(document.getElementById('cierreComision').value);
+    const comision = (!Number.isNaN(comisionInput) && comisionInput >= 0) ? comisionInput : null;
 
     document.getElementById('modalCierreCustom')?.remove();
 
@@ -848,14 +867,15 @@ async function confirmarCierre(idCliente) {
         const res = await fetch(`${window.API_BASE_URL}/admin/ventas/registrar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_cliente: idCliente, id_propiedad: idPropiedad, precio_venta: precio, tipo_operacion: tipoOp, notas })
+            body: JSON.stringify({ id_cliente: idCliente, id_propiedad: idPropiedad, precio_venta: precio, tipo_operacion: tipoOp, notas, comision })
         });
         const data = await res.json();
         if (data.status === 'success') {
             const c = window.clientesGlobal.find(x => x.id_cliente === idCliente);
             if (c) c.estado_seguimiento = 'Cerrado';
             aplicarFiltroClientes();
-            mostrarNotificacion(`🎉 ¡Venta registrada! Comisión: $${(precio * 0.035).toLocaleString('es-MX')}`, 'success');
+            const comValor = data.comision || (precio * 0.035);
+            mostrarNotificacion(`🎉 ¡Venta registrada! Comisión: $${parseFloat(comValor).toLocaleString('es-MX')}`, 'success');
         } else {
             mostrarNotificacion(data.message || 'Error al registrar venta.', 'error');
         }

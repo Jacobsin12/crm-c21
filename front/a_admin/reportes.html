@@ -29,6 +29,22 @@
                     <i data-lucide="download" class="w-4 h-4"></i> Descargar Reporte (PDF)
                 </button>
             </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <label for="filtroMesReportes" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Filtrar por mes</label>
+                    <select id="filtroMesReportes" onchange="actualizarFiltrosReportes()" class="w-full mt-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-[--gold-primary] cursor-pointer">
+                    </select>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <label for="filtroMotivoReportes" class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Motivo de descarte</label>
+                    <select id="filtroMotivoReportes" onchange="actualizarFiltrosReportes()" class="w-full mt-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-[--gold-primary] cursor-pointer">
+                        <option value="Todos">Todos</option>
+                    </select>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center justify-center">
+                    <button onclick="resetFiltrosReportes()" class="bg-slate-900 hover:bg-slate-800 text-white uppercase text-xs tracking-wide font-bold px-4 py-3 rounded-xl shadow-sm">Resetear filtros</button>
+                </div>
+            </div>
 
             <!-- CONTENEDOR PDF -->
             <div id="contenedorGraficasPDF">
@@ -100,7 +116,7 @@
             </div>
 
             <!-- Tabla Descartados -->
-            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl mb-6">
                 <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
                     <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400"></i>
                     Clientes No Cerrados — Detalle de Motivos
@@ -123,6 +139,30 @@
                 </div>
             </div>
 
+            <!-- Tabla Ventas Cerradas -->
+            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+                    Ventas Cerradas — Detalle de Cierre
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-[10px] font-bold uppercase text-slate-400 border-b border-slate-200">
+                                <th class="p-2">Cliente</th>
+                                <th class="p-2">Tipo</th>
+                                <th class="p-2">Precio</th>
+                                <th class="p-2">Comisión</th>
+                                <th class="p-2">Fecha cierre</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaVentasCerradas">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             </div><!-- fin contenedorGraficasPDF -->
         </div>
     </main>
@@ -130,6 +170,7 @@
     <script src="navbar.js"></script>
     <script>
         let datosGlobales = null;
+        const filtrosReportes = { mes: 'Todos', motivo_descarte: 'Todos' };
 
         document.addEventListener("DOMContentLoaded", () => {
             renderLuxuryNavbar('reportes');
@@ -142,13 +183,88 @@
 
         const MESES = ['Ene','Feb','Mar','Abr','Mayo','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
+        function formatearMes(yyyyMm) {
+            const [y, m] = yyyyMm.split('-');
+            return `${MESES[parseInt(m, 10)-1]} ${y}`;
+        }
+
+        function actualizarFiltrosReportes() {
+            filtrosReportes.mes = document.getElementById('filtroMesReportes').value;
+            filtrosReportes.motivo_descarte = document.getElementById('filtroMotivoReportes').value;
+            cargarEstadisticas();
+        }
+
+        function resetFiltrosReportes() {
+            filtrosReportes.mes = 'Todos';
+            filtrosReportes.motivo_descarte = 'Todos';
+            document.getElementById('filtroMesReportes').value = 'Todos';
+            document.getElementById('filtroMotivoReportes').value = 'Todos';
+            cargarEstadisticas();
+        }
+
+        function llenarFiltros(res) {
+            const mesSelect = document.getElementById('filtroMesReportes');
+            const motivoSelect = document.getElementById('filtroMotivoReportes');
+            const mesesSet = new Set(['Todos']);
+
+            (res.ventasMensuales || []).forEach(item => {
+                mesesSet.add(item.mes);
+            });
+            (res.detalleDescartados || []).forEach(item => {
+                if (item.fecha_registro) {
+                    mesesSet.add(item.fecha_registro.slice(0, 7));
+                }
+            });
+            if (filtrosReportes.mes && filtrosReportes.mes !== 'Todos') {
+                mesesSet.add(filtrosReportes.mes);
+            }
+
+            mesSelect.innerHTML = Array.from(mesesSet).sort((a, b) => {
+                if (a === 'Todos') return -1;
+                if (b === 'Todos') return 1;
+                return a.localeCompare(b);
+            }).map(m => `<option value="${m}">${m === 'Todos' ? 'Todos' : formatearMes(m)}</option>`).join('');
+            mesSelect.value = filtrosReportes.mes;
+
+            const motivos = ['Todos'].concat((res.perdidas || []).map(p => p.motivo_descarte === null ? '__SIN_MOTIVO__' : p.motivo_descarte));
+            if (filtrosReportes.motivo_descarte && filtrosReportes.motivo_descarte !== 'Todos') {
+                motivos.push(filtrosReportes.motivo_descarte);
+            }
+            motivoSelect.innerHTML = motivos.filter((value, index, self) => self.indexOf(value) === index)
+                .map(m => `<option value="${m}">${m === '__SIN_MOTIVO__' ? 'No especificado' : m}</option>`)
+                .join('');
+            motivoSelect.value = filtrosReportes.motivo_descarte;
+        }
+
+        function llenarTablaVentasCerradas(ventas) {
+            const tbody = document.getElementById('tablaVentasCerradas');
+            if (ventas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs italic">No hay ventas cerradas para este filtro.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = ventas.map(v => `
+                <tr class="hover:bg-slate-100/50 transition-colors">
+                    <td class="p-2 font-bold text-slate-800">${v.nombre || '—'}</td>
+                    <td class="p-2 text-slate-500 text-xs">${v.tipo_operacion || '—'}</td>
+                    <td class="p-2 text-slate-600 font-semibold text-xs">${formatMXN(v.precio_venta)}</td>
+                    <td class="p-2 text-slate-600 font-semibold text-xs">${formatMXN(v.comision || 0)}</td>
+                    <td class="p-2 text-slate-400 text-[10px]">${v.fecha_cierre ? new Date(v.fecha_cierre).toLocaleDateString('es-MX') : '—'}</td>
+                </tr>
+            `).join('');
+        }
+
         async function cargarEstadisticas() {
             try {
-                const res = await fetch(`${window.API_BASE_URL}/admin/estadisticas`, {
+                const query = new URLSearchParams();
+                if (filtrosReportes.mes && filtrosReportes.mes !== 'Todos') query.set('mes', filtrosReportes.mes);
+                if (filtrosReportes.motivo_descarte && filtrosReportes.motivo_descarte !== 'Todos') query.set('motivo_descarte', filtrosReportes.motivo_descarte);
+                const url = `${window.API_BASE_URL}/admin/estadisticas${query.toString() ? '?' + query.toString() : ''}`;
+                const res = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${window.adminToken}` }
                 }).then(r => r.json());
 
                 datosGlobales = res;
+                llenarFiltros(res);
 
                 // --- KPIs ---
                 const r = res.resumen || {};
@@ -291,6 +407,7 @@
                     tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs italic">No hay clientes descartados.</td></tr>';
                 }
 
+                llenarTablaVentasCerradas(res.ventasCerradas || []);
             } catch (e) {
                 console.error(e);
             }

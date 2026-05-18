@@ -387,9 +387,32 @@ app.get('/api/admin/clientes', (req, res) => {
 // RUTA DE ESTADÍSTICAS (ANALYTICS)
 // ==========================================
 app.get('/api/admin/estadisticas', (req, res) => {
-    const q1 = "SELECT estado_seguimiento, COUNT(*) as total FROM clientes_prospectos GROUP BY estado_seguimiento";
-    const q2 = "SELECT zona_interes, COUNT(*) as total FROM clientes_prospectos GROUP BY zona_interes ORDER BY total DESC LIMIT 5";
-    const q3 = "SELECT motivo_descarte, COUNT(*) as total FROM clientes_prospectos WHERE estado_seguimiento = 'Descartado' GROUP BY motivo_descarte";
+    const { mes, motivo_descarte } = req.query;
+    const prospectosParams = [];
+    let prospectosWhere = '';
+    if (mes && mes !== 'Todos') {
+        prospectosWhere += " AND DATE_FORMAT(fecha_registro, '%Y-%m') = ?";
+        prospectosParams.push(mes);
+    }
+    if (motivo_descarte && motivo_descarte !== 'Todos') {
+        if (motivo_descarte === '__SIN_MOTIVO__') {
+            prospectosWhere += " AND motivo_descarte IS NULL";
+        } else {
+            prospectosWhere += " AND motivo_descarte = ?";
+            prospectosParams.push(motivo_descarte);
+        }
+    }
+
+    const ventasParams = [];
+    let ventasWhere = '';
+    if (mes && mes !== 'Todos') {
+        ventasWhere += " AND DATE_FORMAT(fecha_cierre, '%Y-%m') = ?";
+        ventasParams.push(mes);
+    }
+
+    const q1 = "SELECT estado_seguimiento, COUNT(*) as total FROM clientes_prospectos WHERE 1=1" + prospectosWhere + " GROUP BY estado_seguimiento";
+    const q2 = "SELECT zona_interes, COUNT(*) as total FROM clientes_prospectos WHERE 1=1" + prospectosWhere + " GROUP BY zona_interes ORDER BY total DESC LIMIT 5";
+    const q3 = "SELECT motivo_descarte, COUNT(*) as total FROM clientes_prospectos WHERE estado_seguimiento = 'Descartado'" + prospectosWhere + " GROUP BY motivo_descarte";
     
     // Ventas por mes (últimos 12 meses)
     const q4 = `SELECT 
@@ -398,7 +421,7 @@ app.get('/api/admin/estadisticas', (req, res) => {
         SUM(precio_venta) as ingreso_total,
         tipo_operacion
         FROM ventas_cerradas 
-        WHERE fecha_cierre >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        WHERE fecha_cierre >= DATE_SUB(NOW(), INTERVAL 12 MONTH)` + ventasWhere + `
         GROUP BY mes, tipo_operacion
         ORDER BY mes ASC`;
     
@@ -406,27 +429,35 @@ app.get('/api/admin/estadisticas', (req, res) => {
     const q5 = `SELECT 
         COUNT(*) as total_ventas,
         COALESCE(SUM(precio_venta), 0) as ingreso_total,
+        COALESCE(SUM(comision), 0) as comision_total,
         COALESCE(MAX(precio_venta), 0) as venta_max,
         COALESCE(AVG(precio_venta), 0) as venta_promedio
-        FROM ventas_cerradas`;
+        FROM ventas_cerradas` + ventasWhere + `;`;
     
     // Total prospectos para tasa de conversión
-    const q6 = "SELECT COUNT(*) as total FROM clientes_prospectos";
+    const q6 = "SELECT COUNT(*) as total FROM clientes_prospectos WHERE 1=1" + prospectosWhere;
     
     // Tiempo promedio de cierre (días entre registro y cierre)
     const q7 = `SELECT COALESCE(AVG(DATEDIFF(fecha_cierre, fecha_registro)), 0) as dias_promedio 
         FROM clientes_prospectos 
-        WHERE estado_seguimiento = 'Cerrado' AND fecha_cierre IS NOT NULL`;
+        WHERE estado_seguimiento = 'Cerrado' AND fecha_cierre IS NOT NULL` + prospectosWhere + `;`;
     
     // Distribución por tipo de operación
     const q8 = `SELECT tipo_operacion, COUNT(*) as total, SUM(precio_venta) as monto 
-        FROM ventas_cerradas GROUP BY tipo_operacion`;
+        FROM ventas_cerradas WHERE 1=1` + ventasWhere + ` GROUP BY tipo_operacion`;
     
     // Detalle de descartados con nombre y motivo
     const q9 = `SELECT nombre, motivo_descarte, fecha_registro, zona_interes, presupuesto_max 
         FROM clientes_prospectos 
-        WHERE estado_seguimiento = 'Descartado' 
+        WHERE estado_seguimiento = 'Descartado'` + prospectosWhere + ` 
         ORDER BY fecha_registro DESC`;
+
+    const q10 = `SELECT v.id, c.nombre, v.tipo_operacion, v.precio_venta, v.comision, v.fecha_cierre, c.zona_interes 
+        FROM ventas_cerradas v 
+        LEFT JOIN clientes_prospectos c ON v.id_cliente = c.id_cliente 
+        WHERE 1=1` + ventasWhere + `
+        ORDER BY v.fecha_cierre DESC
+        LIMIT 100`;
 
     db.query(q1, (err, estados) => {
         if(err) return res.status(500).json({error: err.message});
@@ -446,29 +477,31 @@ app.get('/api/admin/estadisticas', (req, res) => {
                                     if(err) return res.status(500).json({error: err.message});
                                     db.query(q9, (err, detalleDescartados) => {
                                         if(err) return res.status(500).json({error: err.message});
-                                        
-                                        const rv = resumenVentas[0] || {};
-                                        const totalP = totalProspectos[0]?.total || 0;
-                                        const tasaConversion = totalP > 0 ? ((rv.total_ventas / totalP) * 100).toFixed(1) : 0;
-                                        
-                                        res.json({
-                                            estados,
-                                            zonas,
-                                            perdidas,
-                                            detalleDescartados,
-                                            ventasMensuales,
-                                            resumen: {
-                                                total_ventas: rv.total_ventas || 0,
-                                                ingreso_total: parseFloat(rv.ingreso_total) || 0,
-                                                comision_total: parseFloat(rv.ingreso_total) * 0.035 || 0,
-                                                venta_max: parseFloat(rv.venta_max) || 0,
-                                                venta_promedio: parseFloat(rv.venta_promedio) || 0,
-                                                tasa_conversion: parseFloat(tasaConversion),
-                                                dias_promedio_cierre: Math.round(tiempoCierre[0]?.dias_promedio || 0),
-                                                total_prospectos: totalP,
-                                                total_descartados: perdidas.reduce((sum, p) => sum + p.total, 0)
-                                            },
-                                            distribOperacion
+                                        db.query(q10, (err, ventasCerradas) => {
+                                            if(err) return res.status(500).json({error: err.message});
+                                            const rv = resumenVentas[0] || {};
+                                            const totalP = totalProspectos[0]?.total || 0;
+                                            const tasaConversion = totalP > 0 ? ((rv.total_ventas / totalP) * 100).toFixed(1) : 0;
+                                            res.json({
+                                                estados,
+                                                zonas,
+                                                perdidas,
+                                                detalleDescartados,
+                                                ventasMensuales,
+                                                ventasCerradas,
+                                                resumen: {
+                                                    total_ventas: rv.total_ventas || 0,
+                                                    ingreso_total: parseFloat(rv.ingreso_total) || 0,
+                                                    comision_total: parseFloat(rv.comision_total) || 0,
+                                                    venta_max: parseFloat(rv.venta_max) || 0,
+                                                    venta_promedio: parseFloat(rv.venta_promedio) || 0,
+                                                    tasa_conversion: parseFloat(tasaConversion),
+                                                    dias_promedio_cierre: Math.round(tiempoCierre[0]?.dias_promedio || 0),
+                                                    total_prospectos: totalP,
+                                                    total_descartados: perdidas.reduce((sum, p) => sum + p.total, 0)
+                                                },
+                                                distribOperacion
+                                            });
                                         });
                                     });
                                 });
@@ -485,15 +518,19 @@ app.get('/api/admin/estadisticas', (req, res) => {
 // RUTA: REGISTRAR UNA VENTA CERRADA
 // ==========================================
 app.post('/api/admin/ventas/registrar', (req, res) => {
-    const { id_cliente, id_propiedad, precio_venta, tipo_operacion, notas } = req.body;
+    const { id_cliente, id_propiedad, precio_venta, tipo_operacion, notas, comision } = req.body;
     
     if (!id_cliente || !precio_venta) {
         return res.status(400).json({ status: 'error', message: 'Faltan datos obligatorios (cliente y precio).' });
     }
 
-    const qInsert = `INSERT INTO ventas_cerradas (id_cliente, id_propiedad, precio_venta, tipo_operacion, notas, registrado_por)
-                     VALUES (?, ?, ?, ?, ?, ?)`;
-    const params = [id_cliente, id_propiedad || null, precio_venta, tipo_operacion || 'Venta', notas || null, req.usuario.id];
+    const parsedPrecio = parseFloat(precio_venta);
+    const parsedComision = parseFloat(comision);
+    const comisionFinal = (!Number.isNaN(parsedComision) && parsedComision >= 0) ? parsedComision : parseFloat((parsedPrecio * 0.035).toFixed(2));
+
+    const qInsert = `INSERT INTO ventas_cerradas (id_cliente, id_propiedad, precio_venta, comision, tipo_operacion, notas, registrado_por)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const params = [id_cliente, id_propiedad || null, parsedPrecio, comisionFinal, tipo_operacion || 'Venta', notas || null, req.usuario.id];
 
     db.query(qInsert, params, (err) => {
         if (err) return res.status(500).json({ status: 'error', message: 'Error al registrar la venta: ' + err.message });
@@ -508,7 +545,7 @@ app.post('/api/admin/ventas/registrar', (req, res) => {
                     db.query("UPDATE propiedades SET estatus_propiedad = 'No Disponible' WHERE id_propiedad = ?", [id_propiedad], () => {});
                 }
                 
-                res.json({ status: 'success', message: '¡Venta registrada exitosamente!' });
+                res.json({ status: 'success', message: '¡Venta registrada exitosamente!', comision: comisionFinal });
             }
         );
     });

@@ -267,6 +267,15 @@ window.addEventListener('DOMContentLoaded', () => {
 window.clientesGlobal = [];
 
 async function cargarClientes(nuevoId = null) {
+    if (!nuevoId) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('nuevoId')) {
+            nuevoId = params.get('nuevoId');
+            // Limpiamos la URL para no volver a hacer highlight si el usuario recarga manualmente
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
     const tabla = document.getElementById("tablaClientes");
     if (!tabla) return;
     
@@ -350,12 +359,26 @@ function aplicarFiltroClientes(nuevoId = null) {
     if (window.lucide) lucide.createIcons();
 
     if (nuevoId) {
-        setTimeout(() => {
+        const quitarHighlight = () => {
             const tr = document.getElementById(`cliente-${nuevoId}`);
             if (tr) {
                 tr.className = "hover:bg-slate-50/80 transition-colors duration-1000";
             }
-        }, 5000);
+        };
+
+        // Si el usuario ya está viendo la pestaña, cuenta los 5 segundos
+        if (document.visibilityState === 'visible') {
+            setTimeout(quitarHighlight, 5000);
+        } else {
+            // Si está en otra pestaña o app en segundo plano, esperamos a que la vea
+            const onVisibilityChange = () => {
+                if (document.visibilityState === 'visible') {
+                    setTimeout(quitarHighlight, 5000);
+                    document.removeEventListener('visibilitychange', onVisibilityChange);
+                }
+            };
+            document.addEventListener('visibilitychange', onVisibilityChange);
+        }
     }
 }
 

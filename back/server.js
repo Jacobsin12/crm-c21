@@ -270,7 +270,7 @@ app.post('/api/clientes/perfilar', (req, res) => {
                     title: '¡Nuevo Prospecto!',
                     body: `${nombre} busca un(a) ${tipo_propiedad} en ${zona_interes}`,
                     icon: '/assets/icons/c21.png',
-                    data: { url: '/admin/clientes.html' }
+                    data: { url: `/admin/clientes.html?nuevoId=${result.insertId}` }
                 });
                 rows.forEach(row => {
                     try {

@@ -140,7 +140,7 @@
             return '$' + parseFloat(n).toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
         }
 
-        const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const MESES = ['Ene','Feb','Mar','Abr','Mayo','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
         async function cargarEstadisticas() {
             try {
@@ -167,7 +167,7 @@
                     mesesMap[v.mes].ingreso += parseFloat(v.ingreso_total);
                 });
                 const mesesKeys = Object.keys(mesesMap).sort();
-                const mesesLabels = mesesKeys.map(m => { const [y, mo] = m.split('-'); return MESES[parseInt(mo)-1] + ' ' + y.slice(2); });
+                const mesesLabels = mesesKeys.map(m => { const [y, mo] = m.split('-'); return MESES[parseInt(mo)-1] + ' ' + y; });
 
                 new Chart(document.getElementById('chartVentasMes'), {
                     type: 'bar',

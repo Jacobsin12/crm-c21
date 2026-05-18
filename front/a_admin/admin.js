@@ -512,6 +512,191 @@ function aplicarFiltroClientes(nuevoId = null) {
     }
 }
 
+function abrirModalAgregarProspecto() {
+    if (document.getElementById('modalAgregarProspecto')) return;
+
+    window.prospectoManual = {
+        zonas_seleccionadas: [],
+        tipo_operacion: null,
+        tipo_propiedad: null,
+        presupuesto_max: null
+    };
+
+    const div = document.createElement('div');
+    div.id = 'modalAgregarProspecto';
+    div.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4';
+    div.innerHTML = `
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 border border-slate-100 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Agregar prospecto manual</h3>
+                    <p class="text-xs text-slate-500">Usa las mismas preguntas que el cliente respondería.</p>
+                </div>
+                <button onclick="cerrarModalAgregarProspecto()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4 text-sm text-slate-700">
+                <div class="grid gap-3 md:grid-cols-2">
+                    <input id="manualNombre" type="text" placeholder="Nombre completo" class="luxury-input w-full px-4 py-3">
+                    <input id="manualTelefono" type="tel" placeholder="WhatsApp (10 dígitos)" maxlength="10" class="luxury-input w-full px-4 py-3">
+                </div>
+                <input id="manualCorreo" type="email" placeholder="Correo electrónico" class="luxury-input w-full px-4 py-3">
+
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Tipo de operación</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="seleccionarOpcionProspecto('tipo_operacion','Venta', this)" class="luxury-option-btn py-3 rounded-xl" data-prospecto-option="tipo_operacion">Comprar</button>
+                        <button type="button" onclick="seleccionarOpcionProspecto('tipo_operacion','Renta', this)" class="luxury-option-btn py-3 rounded-xl" data-prospecto-option="tipo_operacion">Rentar</button>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Tipo de propiedad</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="seleccionarOpcionProspecto('tipo_propiedad','Casa', this)" class="luxury-option-btn py-3 rounded-xl" data-prospecto-option="tipo_propiedad">Casa</button>
+                        <button type="button" onclick="seleccionarOpcionProspecto('tipo_propiedad','Departamento', this)" class="luxury-option-btn py-3 rounded-xl" data-prospecto-option="tipo_propiedad">Departamento</button>
+                        <button type="button" onclick="seleccionarOpcionProspecto('tipo_propiedad','Bodega', this)" class="luxury-option-btn py-3 rounded-xl" data-prospecto-option="tipo_propiedad">Bodega</button>
+                        <button type="button" onclick="seleccionarOpcionProspecto('tipo_propiedad','Terreno', this)" class="luxury-option-btn py-3 rounded-xl" data-prospecto-option="tipo_propiedad">Terreno</button>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Presupuesto estimado</p>
+                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <button type="button" onclick="seleccionarOpcionProspecto('presupuesto_max',2000000, this)" class="luxury-option-btn py-3 rounded-xl text-left" data-prospecto-option="presupuesto_max">$1,000,000 - $2,000,000</button>
+                        <button type="button" onclick="seleccionarOpcionProspecto('presupuesto_max',3000000, this)" class="luxury-option-btn py-3 rounded-xl text-left" data-prospecto-option="presupuesto_max">$2,000,000 - $3,000,000</button>
+                        <button type="button" onclick="seleccionarOpcionProspecto('presupuesto_max',4000000, this)" class="luxury-option-btn py-3 rounded-xl text-left" data-prospecto-option="presupuesto_max">$3,000,000 - $4,000,000</button>
+                        <button type="button" onclick="seleccionarOpcionProspecto('presupuesto_max',6000000, this)" class="luxury-option-btn py-3 rounded-xl text-left" data-prospecto-option="presupuesto_max">Más de $4,000,000</button>
+                    </div>
+                    <input id="manualPresupuestoCustom" type="number" placeholder="Otro presupuesto" class="luxury-input w-full px-4 py-3 mt-3" oninput="actualizarPresupuestoManual(this.value)">
+                </div>
+
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Zonas de interés</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="toggleZonaProspectoManual('Juriquilla', this)" class="zona-btn luxury-option-btn py-3 rounded-xl text-xs">Juriquilla</button>
+                        <button type="button" onclick="toggleZonaProspectoManual('Sakiá', this)" class="zona-btn luxury-option-btn py-3 rounded-xl text-xs">Sakiá</button>
+                        <button type="button" onclick="toggleZonaProspectoManual('Campanario', this)" class="zona-btn luxury-option-btn py-3 rounded-xl text-xs">Campanario</button>
+                        <button type="button" onclick="toggleZonaProspectoManual('Zibatá', this)" class="zona-btn luxury-option-btn py-3 rounded-xl text-xs">Zibatá</button>
+                        <button type="button" onclick="toggleZonaProspectoManual('Otro', this)" class="zona-btn luxury-option-btn py-3 rounded-xl text-xs col-span-2">Otra ubicación...</button>
+                    </div>
+                    <div id="manualZonaPersonalizadaWrapper" class="hidden mt-3">
+                        <input id="manualZonaPersonalizada" type="text" placeholder="Escribe la otra zona" class="luxury-input w-full px-4 py-3">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 block">Especificaciones adicionales</label>
+                    <textarea id="manualEspecificaciones" rows="3" placeholder="Ej. cerca de escuelas, seguridad 24/7, jardín..." class="luxury-input w-full px-4 py-3"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button type="button" onclick="cerrarModalAgregarProspecto()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl">Cancelar</button>
+                <button type="button" onclick="enviarProspectoManual()" class="flex-1 bg-[--gold-primary] hover:bg-amber-500 text-black font-bold py-3 rounded-xl">Guardar prospecto</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(div);
+    if (window.lucide) lucide.createIcons();
+}
+
+function cerrarModalAgregarProspecto() {
+    document.getElementById('modalAgregarProspecto')?.remove();
+}
+
+function seleccionarOpcionProspecto(campo, valor, boton) {
+    window.prospectoManual[campo] = valor;
+    if (campo === 'presupuesto_max') {
+        document.getElementById('manualPresupuestoCustom').value = '';
+    }
+    document.querySelectorAll(`#modalAgregarProspecto button[data-prospecto-option="${campo}"]`).forEach(btn => btn.classList.remove('border-[--gold-primary]', 'bg-amber-50'));
+    if (boton) {
+        boton.dataset.prospectoOption = campo;
+        boton.classList.add('border-[--gold-primary]', 'bg-amber-50');
+    }
+}
+
+function actualizarPresupuestoManual(valor) {
+    const precio = parseFloat(valor);
+    if (!Number.isNaN(precio) && precio > 0) {
+        window.prospectoManual.presupuesto_max = precio;
+        document.querySelectorAll(`#modalAgregarProspecto button[data-prospecto-option="presupuesto_max"]`).forEach(btn => btn.classList.remove('border-[--gold-primary]', 'bg-amber-50'));
+    }
+}
+
+function toggleZonaProspectoManual(zona, boton) {
+    const index = window.prospectoManual.zonas_seleccionadas.indexOf(zona);
+    if (index > -1) {
+        window.prospectoManual.zonas_seleccionadas.splice(index, 1);
+        boton.classList.remove('border-[--gold-primary]', 'bg-amber-50');
+        if (zona === 'Otro') {
+            document.getElementById('manualZonaPersonalizadaWrapper').classList.add('hidden');
+            document.getElementById('manualZonaPersonalizada').value = '';
+        }
+    } else {
+        window.prospectoManual.zonas_seleccionadas.push(zona);
+        boton.classList.add('border-[--gold-primary]', 'bg-amber-50');
+        if (zona === 'Otro') {
+            document.getElementById('manualZonaPersonalizadaWrapper').classList.remove('hidden');
+        }
+    }
+}
+
+async function enviarProspectoManual() {
+    const nombre = document.getElementById('manualNombre')?.value.trim();
+    const telefono = document.getElementById('manualTelefono')?.value.trim();
+    const correo = document.getElementById('manualCorreo')?.value.trim();
+    const especificaciones = document.getElementById('manualEspecificaciones')?.value.trim() || null;
+    const zonasSeleccionadas = [...window.prospectoManual.zonas_seleccionadas];
+
+    if (!nombre || nombre.length < 4) return mostrarNotificacion('Ingresa el nombre completo.', 'error');
+    if (!telefono || telefono.length < 10) return mostrarNotificacion('Ingresa el número de WhatsApp completo.', 'error');
+    if (!correo) return mostrarNotificacion('Ingresa el correo electrónico.', 'error');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return mostrarNotificacion('Correo inválido.', 'error');
+    if (!window.prospectoManual.tipo_operacion) return mostrarNotificacion('Selecciona el tipo de operación.', 'error');
+    if (!window.prospectoManual.tipo_propiedad) return mostrarNotificacion('Selecciona el tipo de propiedad.', 'error');
+    if (!window.prospectoManual.presupuesto_max) return mostrarNotificacion('Selecciona o ingresa un presupuesto.', 'error');
+    if (zonasSeleccionadas.length === 0) return mostrarNotificacion('Selecciona al menos una zona.', 'error');
+
+    const indexOtro = zonasSeleccionadas.indexOf('Otro');
+    if (indexOtro > -1) {
+        const zonaPersonalizada = document.getElementById('manualZonaPersonalizada')?.value.trim();
+        if (!zonaPersonalizada) return mostrarNotificacion('Escribe la zona personalizada.', 'error');
+        zonasSeleccionadas.splice(indexOtro, 1, zonaPersonalizada);
+    }
+
+    const payload = {
+        nombre,
+        telefono,
+        correo,
+        tipo_operacion: window.prospectoManual.tipo_operacion,
+        tipo_propiedad: window.prospectoManual.tipo_propiedad,
+        presupuesto_max: window.prospectoManual.presupuesto_max,
+        zona_interes: zonasSeleccionadas.join(', '),
+        especificaciones
+    };
+
+    try {
+        const res = await fetch(`${window.API_BASE_URL}/clientes/perfilar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            cerrarModalAgregarProspecto();
+            mostrarNotificacion('Prospecto agregado correctamente.', 'success');
+            cargarClientes();
+        } else {
+            mostrarNotificacion(data.message || 'Error al guardar prospecto.', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacion('No se pudo contactar al servidor.', 'error');
+    }
+}
+
 async function registrarContactoSeguimiento(id, phone, name) {
     try {
         await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/contacto`, { method: 'PUT', headers: { 'Authorization': `Bearer ${window.adminToken}` }});

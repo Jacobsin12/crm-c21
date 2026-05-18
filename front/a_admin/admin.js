@@ -435,8 +435,18 @@ function aplicarFiltroClientes(nuevoId = null) {
         tabla.innerHTML = filtrados.map(c => {
             const requiereSeguimiento = c.estado_seguimiento !== 'Cerrado' && (!c.fecha_ultimo_contacto || (new Date() - new Date(c.fecha_ultimo_contacto)) / (1000 * 60 * 60 * 24) > 3);
             
+            const estadoClass = c.estado_seguimiento === 'Nuevo' ? 'bg-amber-50/40 border-l-4 border-amber-300' :
+                c.estado_seguimiento === 'Contactado' ? 'bg-sky-50/40 border-l-4 border-sky-300' :
+                c.estado_seguimiento === 'Cerrado' ? 'bg-emerald-50/40 border-l-4 border-emerald-300' :
+                c.estado_seguimiento === 'Descartado' ? 'bg-rose-50/40 border-l-4 border-rose-300' : 'bg-slate-50/80 border-l-0';
+            
+            const selectClass = c.estado_seguimiento === 'Nuevo' ? 'border-amber-300 text-amber-800' :
+                c.estado_seguimiento === 'Contactado' ? 'border-sky-300 text-sky-800' :
+                c.estado_seguimiento === 'Cerrado' ? 'border-emerald-300 text-emerald-800' :
+                c.estado_seguimiento === 'Descartado' ? 'border-rose-300 text-rose-800' : 'border-slate-200 text-slate-600';
+            
             const esNuevo = nuevoId && (c.id_cliente === nuevoId || c.id_cliente === Number(nuevoId));
-            const trClass = esNuevo ? "bg-amber-100/60 shadow-[inset_0_0_15px_rgba(212,175,55,0.3)] transition-all duration-1000" : "hover:bg-slate-50/80 transition-colors duration-1000";
+            const trClass = `${esNuevo ? 'bg-amber-100/60 shadow-[inset_0_0_15px_rgba(212,175,55,0.3)] transition-all duration-1000' : 'hover:bg-slate-50/80 transition-colors duration-1000'} ${estadoClass}`;
             
             const fechaObj = c.fecha_registro ? new Date(c.fecha_registro) : new Date();
             const fechaStr = fechaObj.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -467,7 +477,7 @@ function aplicarFiltroClientes(nuevoId = null) {
                     <div class="text-slate-400 text-[11px] truncate max-w-[180px]">${c.zona_interes}</div>
                 </td>
                 <td class="p-3 text-center flex justify-center gap-2 items-center">
-                    <select onchange="actualizarEstadoCliente(${c.id_cliente}, this.value)" class="text-[10px] p-1 border border-slate-200 rounded text-slate-600 bg-white cursor-pointer">
+                    <select onchange="actualizarEstadoCliente(${c.id_cliente}, this.value)" class="text-[10px] p-1 border rounded text-slate-600 bg-white cursor-pointer ${selectClass}">
                         <option value="Nuevo" ${c.estado_seguimiento === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
                         <option value="Contactado" ${c.estado_seguimiento === 'Contactado' ? 'selected' : ''}>Contactado</option>
                         <option value="Cerrado" ${c.estado_seguimiento === 'Cerrado' ? 'selected' : ''}>Cerrado</option>

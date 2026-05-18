@@ -153,5 +153,6 @@ function toggleMobileMenu() {
 
 function cerrarSesion() {
     localStorage.removeItem('adminToken');
+    document.cookie = 'adminToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict';
     window.location.href = 'login.html';
 }

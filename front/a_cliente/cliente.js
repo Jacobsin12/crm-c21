@@ -90,6 +90,7 @@
                     <button type="button" onclick="seleccionarOpcionQuick('tipo_propiedad', 'Departamento')" class="luxury-option-btn p-3 rounded-xl text-center text-sm font-medium cursor-pointer">Departamento</button>
                     <button type="button" onclick="seleccionarOpcionQuick('tipo_propiedad', 'Bodega')" class="luxury-option-btn p-3 rounded-xl text-center text-sm font-medium cursor-pointer">Bodega</button>
                     <button type="button" onclick="seleccionarOpcionQuick('tipo_propiedad', 'Terreno')" class="luxury-option-btn p-3 rounded-xl text-center text-sm font-medium cursor-pointer">Terreno</button>
+                    <button type="button" onclick="seleccionarOpcionQuick('tipo_propiedad', 'Local')" class="luxury-option-btn p-3 rounded-xl text-center text-sm font-medium cursor-pointer">Local</button>
                 </div>
             `
         },
@@ -127,6 +128,8 @@
                         <button type="button" onclick="conmutarZonaSeleccionada('Sakiá', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Sakiá</button>
                         <button type="button" onclick="conmutarZonaSeleccionada('Campanario', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Campanario</button>
                         <button type="button" onclick="conmutarZonaSeleccionada('Zibatá', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Zibatá</button>
+                        <button type="button" onclick="conmutarZonaSeleccionada('Centro', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Centro</button>
+                        <button type="button" onclick="conmutarZonaSeleccionada('Corregidora', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Corregidora</button>
                         <button type="button" onclick="conmutarZonaSeleccionada('Otro', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium col-span-2">Otra ubicación...</button>
                     </div>
                     <div id="wrapperOtro" class="hidden animate-fade-in">

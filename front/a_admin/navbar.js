@@ -36,16 +36,8 @@ function renderLuxuryNavbar(activePage) {
                 </a>
             </nav>
 
-            <!-- DESKTOP USER INFO -->
-            <div class="hidden md:flex items-center gap-4 text-right text-xs text-slate-500 font-medium">
-                <span>Asesor: <span class="text-slate-900 font-semibold">${nombreAsesor}</span></span>
-                <button onclick="cerrarSesion()" class="text-rose-500 hover:text-white hover:bg-rose-500 px-3 py-1.5 rounded-lg font-bold border border-rose-200 transition-all cursor-pointer">
-                    Cerrar Sesión
-                </button>
-            </div>
-
-            <!-- MOBILE HAMBURGER -->
-            <button onclick="toggleMobileMenu()" class="md:hidden w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-sm cursor-pointer transition-colors active:scale-95">
+            <!-- HAMBURGER MENU (UNIVERSAL) -->
+            <button onclick="toggleMobileMenu()" class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-sm cursor-pointer transition-colors active:scale-95">
                 <i data-lucide="menu" class="w-5 h-5"></i>
             </button>
         </header>

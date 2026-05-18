@@ -215,25 +215,17 @@ function broadcastSSE(data) {
 // ==========================================
 // RUTA 1: SUBIR FICHAS TÉCNICAS AL INVENTARIO (AJUSTADA PARA VENV)
 // ==========================================
-app.post('/api/admin/subir-fichas', upload, (req, res) => {
-    if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ status: 'error', message: 'No se enviaron archivos.' });
-    }
 
-    // 1. Responder de INMEDIATO al frontend para liberar la UI
-    res.json({ status: 'success', message: 'Tus archivos se están procesando en segundo plano con Inteligencia Artificial. Recibirás una notificación al terminar.' });
-
-    // 2. Procesamiento asíncrono
-    const rutasArchivos = req.files.map(f => `"${path.resolve(f.path)}"`).join(' ');
-    console.log(`\n🤖 Node.js recibió ${req.files.length} archivo(s). Procesando en segundo plano...`);
-
+// Función reutilizable para ejecutar el Python
+function ejecutarProcesoPython(rutasArchivos, extraArgs = '') {
     const scriptPath = path.join(__dirname, 'importador_pdf.py');
-    
-    // 🛠️ SE FORZA EL USO DEL PYTHON DENTRO DEL ENTORNO VIRTUAL
-    const comando = `"/home/ceciramirez066/C21/back/venv/bin/python" "${scriptPath}" ${rutasArchivos}`;
+    const rutas = Array.isArray(rutasArchivos) ? rutasArchivos.map(f => `"${f}"`).join(' ') : `"${rutasArchivos}"`;
+    const comando = `"/home/ceciramirez066/C21/back/venv/bin/python" "${scriptPath}" ${rutas} ${extraArgs}`;
 
     exec(comando, (error, stdout, stderr) => {
-        req.files.forEach(file => { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); });
+        // Limpiar archivos temporales
+        const archivosArr = Array.isArray(rutasArchivos) ? rutasArchivos : [rutasArchivos];
+        archivosArr.forEach(filePath => { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); });
 
         if (error) {
             console.error(`❌ Error en IA: ${error.message}`);
@@ -248,10 +240,89 @@ app.post('/api/admin/subir-fichas', upload, (req, res) => {
         broadcastSSE({ 
             type: 'pdf_status', 
             status: 'success', 
-            message: `¡${req.files.length} ficha(s) indexada(s) con éxito por la IA!`,
+            message: `¡${archivosArr.length} ficha(s) indexada(s) con éxito por la IA!`,
             nuevosIds: idsGuardados
         });
     });
+}
+
+app.post('/api/admin/subir-fichas', upload, (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ status: 'error', message: 'No se enviaron archivos.' });
+    }
+
+    // 1. Responder de INMEDIATO al frontend para liberar la UI
+    res.json({ status: 'success', message: 'Tus archivos se están procesando en segundo plano con Inteligencia Artificial. Recibirás una notificación al terminar.' });
+
+    console.log(`\n🤖 Node.js recibió ${req.files.length} archivo(s). Verificando duplicados...`);
+
+    // 2. PRE-CHECK: Separar archivos en "nuevos" y "duplicados"
+    const archivosSinDuplicado = [];
+    let pendientes = req.files.length;
+
+    req.files.forEach(file => {
+        const matchId = file.originalname.match(/\(([^)]+)\)/);
+        const idDetectado = matchId ? matchId[1] : null;
+
+        if (!idDetectado) {
+            // No tiene ID en el nombre, procesamos normal
+            archivosSinDuplicado.push(path.resolve(file.path));
+            pendientes--;
+            if (pendientes === 0) procesarRestantes();
+            return;
+        }
+
+        // Buscar en DB si el ID ya existe
+        db.query('SELECT id_propiedad, titulo FROM propiedades WHERE id_propiedad = ?', [idDetectado], (err, rows) => {
+            if (!err && rows.length > 0) {
+                // ¡Duplicado! Enviar alerta SSE y guardar la ruta temporal
+                console.log(`⚠️ Propiedad duplicada detectada: ${idDetectado} (${rows[0].titulo})`);
+                broadcastSSE({
+                    type: 'pdf_status',
+                    status: 'duplicated_check',
+                    id_propiedad: idDetectado,
+                    titulo: rows[0].titulo,
+                    temp_path: path.resolve(file.path),
+                    message: `La propiedad con ID ${idDetectado} ya está registrada.`
+                });
+            } else {
+                // No existe, lo añadimos a la cola de procesamiento normal
+                archivosSinDuplicado.push(path.resolve(file.path));
+            }
+            pendientes--;
+            if (pendientes === 0) procesarRestantes();
+        });
+    });
+
+    function procesarRestantes() {
+        if (archivosSinDuplicado.length > 0) {
+            ejecutarProcesoPython(archivosSinDuplicado);
+        }
+    }
+});
+
+// ==========================================
+// RUTA 1.5: CONFIRMAR/CANCELAR ACTUALIZACIÓN DE PROPIEDAD DUPLICADA
+// ==========================================
+app.post('/api/admin/confirmar-actualizacion', (req, res) => {
+    const { temp_path, forzar } = req.body;
+    
+    if (!temp_path) {
+        return res.status(400).json({ status: 'error', message: 'No se proporcionó la ruta del archivo.' });
+    }
+
+    if (forzar) {
+        // El usuario dijo "Sí, actualiza"
+        console.log(`🔄 Usuario confirmó actualización forzada para: ${temp_path}`);
+        ejecutarProcesoPython(temp_path, '--forzar');
+        return res.json({ status: 'success', message: 'Procesando actualización...' });
+    } else {
+        // El usuario dijo "Cancelar" → borramos el PDF temporal
+        console.log(`🗑️ Usuario canceló. Eliminando temporal: ${temp_path}`);
+        if (fs.existsSync(temp_path)) fs.unlinkSync(temp_path);
+        broadcastSSE({ type: 'pdf_status', status: 'info', message: 'Operación cancelada por el usuario.' });
+        return res.json({ status: 'success', message: 'Operación cancelada.' });
+    }
 });
 
 // ==========================================

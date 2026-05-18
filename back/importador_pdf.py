@@ -117,8 +117,16 @@ def insertar_en_mysql(datos):
                 banos_completos, estacionamientos, edo_conservacion, amenidades, carpeta_drive_fotos
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE 
-                titulo=VALUES(titulo), precio=VALUES(precio), descripcion=VALUES(descripcion), 
-                carpeta_drive_fotos=VALUES(carpeta_drive_fotos), estatus_propiedad='Disponible';
+                titulo=VALUES(titulo), tipo_propiedad=VALUES(tipo_propiedad), tipo_operacion=VALUES(tipo_operacion),
+                precio=VALUES(precio), moneda=VALUES(moneda), direccion=VALUES(direccion),
+                descripcion=VALUES(descripcion), zona=VALUES(zona),
+                superficie_terreno=VALUES(superficie_terreno), superficie_construccion=VALUES(superficie_construccion),
+                medida_frente=VALUES(medida_frente), medida_fondo=VALUES(medida_fondo),
+                niveles_construidos=VALUES(niveles_construidos), recamaras=VALUES(recamaras),
+                medios_banos=VALUES(medios_banos), banos_completos=VALUES(banos_completos),
+                estacionamientos=VALUES(estacionamientos), edo_conservacion=VALUES(edo_conservacion),
+                amenidades=VALUES(amenidades), carpeta_drive_fotos=VALUES(carpeta_drive_fotos),
+                estatus_propiedad='Disponible';
         """
         
         valores = (
@@ -145,15 +153,18 @@ def insertar_en_mysql(datos):
 # EJECUCIÓN POR ARGUMENTOS (NODE.JS COMPATIBLE)
 # ==========================================
 if __name__ == "__main__":
-    # Capturamos los archivos que nos pasen por comando (saltándonos el nombre del script)
-    archivos_a_procesar = sys.argv[1:]
+    # Detectamos si viene la bandera de forzar actualización
+    forzar_actualizacion = "--forzar" in sys.argv
+    # Limpiamos los argumentos quitando la bandera para que no rompa tu bucle de archivos
+    archivos_a_procesar = [arg for arg in sys.argv[1:] if arg != "--forzar"]
 
     if not archivos_a_procesar:
         print("--- Error: No se proporcionó ningún archivo PDF para procesar. ---")
         print("Uso: python importador_dashboard.py archivo1.pdf archivo2.pdf ...")
         sys.exit(1)
 
-    print(f"=== Procesando {len(archivos_a_procesar)} archivo(s) desde el Dashboard ===\n")
+    modo = "ACTUALIZACIÓN FORZADA" if forzar_actualizacion else "NORMAL"
+    print(f"=== Procesando {len(archivos_a_procesar)} archivo(s) desde el Dashboard [Modo: {modo}] ===\n")
 
     for idx, ruta_pdf in enumerate(archivos_a_procesar, 1):
         if not os.path.exists(ruta_pdf):

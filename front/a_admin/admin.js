@@ -247,6 +247,96 @@ window.mostrarNotificacion = function(mensaje, tipo = 'success') {
 };
 
 // ==========================================
+// MODAL DE CONFIRMACIÓN PARA PROPIEDADES DUPLICADAS
+// ==========================================
+function mostrarModalDuplicado(data) {
+    // Eliminar modal anterior si existe
+    const existente = document.getElementById('modalDuplicado');
+    if (existente) existente.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'modalDuplicado';
+    overlay.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4';
+    overlay.innerHTML = `
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 transform scale-95 opacity-0 transition-all duration-300" id="modalDuplicadoInner">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-lg">Propiedad Existente</h3>
+                    <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Conflicto de ID detectado</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-4 mb-6 border border-slate-100">
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    El ID <span class="font-bold text-slate-900 bg-amber-100 px-1.5 py-0.5 rounded">${data.id_propiedad}</span>
+                    ya está asignado a:
+                </p>
+                <p class="text-base font-bold text-slate-900 mt-2">"${data.titulo}"</p>
+            </div>
+
+            <p class="text-sm text-slate-500 mb-6">¿Deseas <span class="font-bold text-amber-600">sobreescribir</span> esta propiedad con los nuevos datos del PDF o prefieres cancelar?</p>
+
+            <div class="flex gap-3">
+                <button id="btnCancelarDuplicado" class="flex-1 p-3 rounded-2xl bg-slate-100 text-slate-600 font-bold text-sm hover:bg-slate-200 transition-colors cursor-pointer active:scale-95">
+                    Cancelar
+                </button>
+                <button id="btnConfirmarDuplicado" class="flex-1 p-3 rounded-2xl bg-amber-500 text-white font-bold text-sm hover:bg-amber-600 transition-colors cursor-pointer active:scale-95 shadow-lg shadow-amber-500/30">
+                    Sí, Actualizar
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    if (window.lucide) lucide.createIcons();
+
+    // Animación de entrada
+    requestAnimationFrame(() => {
+        const inner = document.getElementById('modalDuplicadoInner');
+        if (inner) {
+            inner.classList.remove('scale-95', 'opacity-0');
+            inner.classList.add('scale-100', 'opacity-100');
+        }
+    });
+
+    // Función para cerrar con animación
+    function cerrarModal() {
+        const inner = document.getElementById('modalDuplicadoInner');
+        if (inner) {
+            inner.classList.remove('scale-100', 'opacity-100');
+            inner.classList.add('scale-95', 'opacity-0');
+        }
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.remove(), 300);
+    }
+
+    // Botón CANCELAR
+    document.getElementById('btnCancelarDuplicado').addEventListener('click', () => {
+        cerrarModal();
+        mostrarNotificacion('Operación cancelada por el usuario.', 'info');
+        fetch(`${window.API_BASE_URL}/admin/confirmar-actualizacion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.adminToken}` },
+            body: JSON.stringify({ temp_path: data.temp_path, forzar: false })
+        });
+    });
+
+    // Botón CONFIRMAR
+    document.getElementById('btnConfirmarDuplicado').addEventListener('click', () => {
+        cerrarModal();
+        mostrarNotificacion('Actualizando propiedad con la IA...', 'success');
+        fetch(`${window.API_BASE_URL}/admin/confirmar-actualizacion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${window.adminToken}` },
+            body: JSON.stringify({ temp_path: data.temp_path, forzar: true })
+        });
+    });
+}
+
+// ==========================================
 // CONEXIÓN SSE PARA NOTIFICACIONES EN TIEMPO REAL (OPTIMIZADO)
 // ==========================================
 function inicializarSSE() {
@@ -271,6 +361,11 @@ function inicializarSSE() {
                 } else if (data.status === 'error') {
                     // Si la IA tronó, te avisa de inmediato con una alerta en rojo
                     mostrarNotificacion(data.message, 'error');
+                } else if (data.status === 'duplicated_check') {
+                    // 🚨 PROPIEDAD DUPLICADA: Mostrar modal de confirmación
+                    mostrarModalDuplicado(data);
+                } else if (data.status === 'info') {
+                    mostrarNotificacion(data.message, 'info');
                 }
             }
             

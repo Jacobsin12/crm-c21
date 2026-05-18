@@ -15,46 +15,132 @@
     <link rel="stylesheet" href="../assets/css/global.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
 </head>
-<body class="custom-bg min-h-screen text-slate-100 font-sans antialiased p-6">
+<body class="custom-bg min-h-screen text-slate-100 font-sans antialiased p-4 md:p-6">
 
-    <main class="max-w-6xl mx-auto animate-fade-in">
+    <main class="max-w-7xl mx-auto animate-fade-in">
         <div class="luxury-card !m-0 !max-w-none">
-            <div class="flex justify-between items-center mb-6">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div class="flex items-center gap-2">
                     <i data-lucide="bar-chart-3" class="text-[--gold-primary] w-5 h-5"></i>
                     <h2 class="text-lg font-bold text-slate-900">Métricas y Reportes de Rendimiento</h2>
                 </div>
-             <button onclick="generarReportePDF()" id="btnDescargarPDF" class="bg-[--gold-primary] hover:brightness-110 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95">
-    <i data-lucide="download" class="w-4 h-4"></i> Descargar Reporte (PDF)
-</button>
+                <button onclick="generarReportePDF()" id="btnDescargarPDF" class="bg-[--gold-primary] hover:brightness-110 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95">
+                    <i data-lucide="download" class="w-4 h-4"></i> Descargar Reporte (PDF)
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="contenedorGraficasPDF">
+            <!-- CONTENEDOR PDF -->
+            <div id="contenedorGraficasPDF">
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6" id="kpiCards">
+                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 p-4 rounded-2xl text-center">
+                    <i data-lucide="home" class="w-5 h-5 text-emerald-500 mx-auto mb-1"></i>
+                    <p class="text-2xl font-black text-emerald-700" id="kpiVentas">0</p>
+                    <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Casas Vendidas</p>
+                </div>
+                <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 p-4 rounded-2xl text-center">
+                    <i data-lucide="banknote" class="w-5 h-5 text-amber-500 mx-auto mb-1"></i>
+                    <p class="text-xl font-black text-amber-700" id="kpiIngreso">$0</p>
+                    <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Ingreso Total</p>
+                </div>
+                <div class="bg-gradient-to-br from-violet-50 to-violet-100/50 border border-violet-200/50 p-4 rounded-2xl text-center">
+                    <i data-lucide="wallet" class="w-5 h-5 text-violet-500 mx-auto mb-1"></i>
+                    <p class="text-xl font-black text-violet-700" id="kpiComision">$0</p>
+                    <p class="text-[10px] font-bold text-violet-600 uppercase tracking-wider">Tu Comisión (3.5%)</p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 p-4 rounded-2xl text-center">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-blue-500 mx-auto mb-1"></i>
+                    <p class="text-2xl font-black text-blue-700" id="kpiConversion">0%</p>
+                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Tasa Conversión</p>
+                </div>
+                <div class="bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200/50 p-4 rounded-2xl text-center">
+                    <i data-lucide="user-x" class="w-5 h-5 text-rose-500 mx-auto mb-1"></i>
+                    <p class="text-2xl font-black text-rose-700" id="kpiDescartados">0</p>
+                    <p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">No Cerrados</p>
+                </div>
+                <div class="bg-gradient-to-br from-cyan-50 to-cyan-100/50 border border-cyan-200/50 p-4 rounded-2xl text-center">
+                    <i data-lucide="clock" class="w-5 h-5 text-cyan-500 mx-auto mb-1"></i>
+                    <p class="text-2xl font-black text-cyan-700" id="kpiDias">0 <span class="text-sm">días</span></p>
+                    <p class="text-[10px] font-bold text-cyan-600 uppercase tracking-wider">Tiempo Promedio</p>
+                </div>
+            </div>
+
+            <!-- Gráficas de Ventas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Casas Vendidas por Mes</h3>
+                    <canvas id="chartVentasMes"></canvas>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Ingresos y Comisión Mensual</h3>
+                    <canvas id="chartIngresosMes"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráficas del Embudo -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                 <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Estado del Embudo</h3>
                     <canvas id="chartEstados"></canvas>
                 </div>
-                
                 <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Top 5 Zonas Solicitadas</h3>
                     <canvas id="chartZonas"></canvas>
                 </div>
-
                 <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Motivos de Descarte</h3>
                     <canvas id="chartPerdidas"></canvas>
                 </div>
+                <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Tipo de Operación</h3>
+                    <canvas id="chartOperacion"></canvas>
+                </div>
             </div>
 
+            <!-- Tabla Descartados -->
+            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400"></i>
+                    Clientes No Cerrados — Detalle de Motivos
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-[10px] font-bold uppercase text-slate-400 border-b border-slate-200">
+                                <th class="p-2">Cliente</th>
+                                <th class="p-2">Zona</th>
+                                <th class="p-2">Presupuesto</th>
+                                <th class="p-2">Motivo</th>
+                                <th class="p-2">Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaDescartados">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            </div><!-- fin contenedorGraficasPDF -->
         </div>
     </main>
 
     <script src="navbar.js"></script>
     <script>
+        let datosGlobales = null;
+
         document.addEventListener("DOMContentLoaded", () => {
             renderLuxuryNavbar('reportes');
             cargarEstadisticas();
         });
+
+        function formatMXN(n) {
+            return '$' + parseFloat(n).toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        }
+
+        const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
         async function cargarEstadisticas() {
             try {
@@ -62,7 +148,74 @@
                     headers: { 'Authorization': `Bearer ${window.adminToken}` }
                 }).then(r => r.json());
 
-                // Grafica Estados
+                datosGlobales = res;
+
+                // --- KPIs ---
+                const r = res.resumen || {};
+                document.getElementById('kpiVentas').textContent = r.total_ventas || 0;
+                document.getElementById('kpiIngreso').textContent = formatMXN(r.ingreso_total);
+                document.getElementById('kpiComision').textContent = formatMXN(r.comision_total);
+                document.getElementById('kpiConversion').textContent = (r.tasa_conversion || 0) + '%';
+                document.getElementById('kpiDescartados').textContent = r.total_descartados || 0;
+                document.getElementById('kpiDias').innerHTML = (r.dias_promedio_cierre || 0) + ' <span class="text-sm">días</span>';
+
+                // --- Ventas por Mes (barras) ---
+                const mesesMap = {};
+                (res.ventasMensuales || []).forEach(v => {
+                    if (!mesesMap[v.mes]) mesesMap[v.mes] = { cantidad: 0, ingreso: 0 };
+                    mesesMap[v.mes].cantidad += v.cantidad;
+                    mesesMap[v.mes].ingreso += parseFloat(v.ingreso_total);
+                });
+                const mesesKeys = Object.keys(mesesMap).sort();
+                const mesesLabels = mesesKeys.map(m => { const [y, mo] = m.split('-'); return MESES[parseInt(mo)-1] + ' ' + y.slice(2); });
+
+                new Chart(document.getElementById('chartVentasMes'), {
+                    type: 'bar',
+                    data: {
+                        labels: mesesLabels.length > 0 ? mesesLabels : ['Sin datos'],
+                        datasets: [{
+                            label: 'Ventas',
+                            data: mesesLabels.length > 0 ? mesesKeys.map(m => mesesMap[m].cantidad) : [0],
+                            backgroundColor: '#059669',
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+
+                // --- Ingresos + Comisión por Mes (líneas) ---
+                new Chart(document.getElementById('chartIngresosMes'), {
+                    type: 'line',
+                    data: {
+                        labels: mesesLabels.length > 0 ? mesesLabels : ['Sin datos'],
+                        datasets: [
+                            {
+                                label: 'Ingreso',
+                                data: mesesLabels.length > 0 ? mesesKeys.map(m => mesesMap[m].ingreso) : [0],
+                                borderColor: '#d4af37',
+                                backgroundColor: 'rgba(212,175,55,0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                borderWidth: 2
+                            },
+                            {
+                                label: 'Comisión (3.5%)',
+                                data: mesesLabels.length > 0 ? mesesKeys.map(m => mesesMap[m].ingreso * 0.035) : [0],
+                                borderColor: '#7c3aed',
+                                backgroundColor: 'rgba(124,58,237,0.08)',
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 4,
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMXN(v) } } } }
+                });
+
+                // --- Estado del Embudo ---
                 new Chart(document.getElementById('chartEstados'), {
                     type: 'doughnut',
                     data: {
@@ -73,10 +226,11 @@
                             borderColor: ['#cbd5e1', '#f59e0b', '#22c55e', '#e11d48'],
                             borderWidth: 1
                         }]
-                    }
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
                 });
 
-                // Grafica Zonas
+                // --- Zonas ---
                 new Chart(document.getElementById('chartZonas'), {
                     type: 'bar',
                     data: {
@@ -84,24 +238,58 @@
                         datasets: [{
                             label: 'Prospectos',
                             data: res.zonas.map(z => z.total),
-                            backgroundColor: '#b89868', // Gold
+                            backgroundColor: '#b89868',
                             borderRadius: 4
                         }]
-                    }
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } }, indexAxis: 'y' }
                 });
 
-                // Grafica Perdidas
+                // --- Motivos Descarte ---
                 new Chart(document.getElementById('chartPerdidas'), {
                     type: 'pie',
                     data: {
                         labels: res.perdidas.map(p => p.motivo_descarte || 'No especificado'),
                         datasets: [{
                             data: res.perdidas.map(p => p.total),
-                            backgroundColor: ['#e2e8f0', '#94a3b8', '#64748b', '#475569'],
+                            backgroundColor: ['#fca5a5', '#fdba74', '#94a3b8', '#64748b', '#475569'],
                             borderWidth: 0
                         }]
-                    }
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
                 });
+
+                // --- Tipo Operación ---
+                const distrib = res.distribOperacion || [];
+                new Chart(document.getElementById('chartOperacion'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: distrib.length > 0 ? distrib.map(d => d.tipo_operacion) : ['Sin datos'],
+                        datasets: [{
+                            data: distrib.length > 0 ? distrib.map(d => d.total) : [1],
+                            backgroundColor: distrib.length > 0 ? ['#059669', '#0ea5e9', '#f59e0b', '#e11d48'] : ['#e2e8f0'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
+                });
+
+                // --- Tabla Descartados ---
+                const tbody = document.getElementById('tablaDescartados');
+                const desc = res.detalleDescartados || [];
+                if (desc.length > 0) {
+                    tbody.innerHTML = desc.map(d => `
+                        <tr class="hover:bg-slate-100/50 transition-colors">
+                            <td class="p-2 font-bold text-slate-800">${d.nombre}</td>
+                            <td class="p-2 text-slate-500 text-xs">${d.zona_interes || '—'}</td>
+                            <td class="p-2 text-slate-600 font-semibold text-xs">${d.presupuesto_max ? formatMXN(d.presupuesto_max) : '—'}</td>
+                            <td class="p-2"><span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded-md text-[10px] font-bold">${d.motivo_descarte || 'No especificado'}</span></td>
+                            <td class="p-2 text-slate-400 text-[10px]">${d.fecha_registro ? new Date(d.fecha_registro).toLocaleDateString('es-MX') : '—'}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs italic">No hay clientes descartados.</td></tr>';
+                }
 
             } catch (e) {
                 console.error(e);
@@ -117,53 +305,157 @@
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('p', 'mm', 'a4');
-                const pageWidth = doc.internal.pageSize.getWidth();
-                
-                // Add Logo
+                const pw = doc.internal.pageSize.getWidth();
+                const ph = doc.internal.pageSize.getHeight();
+                const m = 15;
+                const r = datosGlobales?.resumen || {};
+
+                // Logo
                 const logoObj = new Image();
                 logoObj.src = '../assets/icons/c21.png';
                 await new Promise(r => { logoObj.onload = r; logoObj.onerror = r; });
-                
-                // Header background
-                doc.setFillColor(15, 23, 42); // slate-900
-                doc.rect(0, 0, pageWidth, 40, 'F');
-                
-                // Logo & Text
-                if(logoObj.width > 0) {
-                    doc.addImage(logoObj, 'PNG', 15, 8, 24, 24);
-                }
-                
+
+                // === PAGE 1: KPIs + Ventas ===
+                // Header
+                doc.setFillColor(15, 23, 42);
+                doc.rect(0, 0, pw, 40, 'F');
+                if(logoObj.width > 0) doc.addImage(logoObj, 'PNG', m, 8, 24, 24);
                 doc.setTextColor(255, 255, 255);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(16);
                 doc.text("REPORTE EJECUTIVO", 45, 18);
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
-                doc.setTextColor(203, 163, 101); // gold
-                doc.text("Century 21 - Rendimiento y Prospectos", 45, 25);
-                
+                doc.setTextColor(203, 163, 101);
+                doc.text("Century 21 — Rendimiento, Ventas y Comisiones", 45, 25);
                 const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(9);
-                doc.text(`Fecha: ${fecha}`, pageWidth - 15, 25, { align: 'right' });
+                doc.text(`Fecha: ${fecha}`, pw - m, 25, { align: 'right' });
 
-                // Capture charts using html-to-image
-                const content = document.getElementById('contenedorGraficasPDF');
-                const imgData = await htmlToImage.toPng(content, { backgroundColor: '#ffffff', pixelRatio: 2 });
-                
-                // Calculate dimensions to fit in A4
-                // A4 is 210mm wide. Content pixel width can vary.
-                const imgProps = doc.getImageProperties(imgData);
-                const margin = 15;
-                const imgWidth = pageWidth - (margin * 2);
-                const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-                
-                doc.addImage(imgData, 'PNG', margin, 50, imgWidth, imgHeight);
-                
-                // Footer
-                doc.setTextColor(148, 163, 184); // slate-400
+                // KPI Table
+                let y = 50;
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(15, 23, 42);
+                doc.text("RESUMEN EJECUTIVO", m, y);
+                y += 8;
+
+                const kpis = [
+                    ['Casas Vendidas', String(r.total_ventas || 0)],
+                    ['Ingreso Total', formatMXN(r.ingreso_total)],
+                    ['Tu Comisión (3.5%)', formatMXN(r.comision_total)],
+                    ['Tasa de Conversión', (r.tasa_conversion || 0) + '%'],
+                    ['Clientes No Cerrados', String(r.total_descartados || 0)],
+                    ['Tiempo Promedio de Cierre', (r.dias_promedio_cierre || 0) + ' días'],
+                    ['Venta Más Alta', formatMXN(r.venta_max)],
+                    ['Total Prospectos', String(r.total_prospectos || 0)]
+                ];
+
+                kpis.forEach(([label, val], i) => {
+                    const bgColor = i % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+                    doc.setFillColor(...bgColor);
+                    doc.rect(m, y, pw - m * 2, 8, 'F');
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(label, m + 3, y + 5.5);
+                    doc.setFont("helvetica", "bold");
+                    doc.setTextColor(15, 23, 42);
+                    doc.text(val, pw - m - 3, y + 5.5, { align: 'right' });
+                    y += 8;
+                });
+
+                // Charts snapshot
+                y += 10;
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(15, 23, 42);
+                doc.text("GRÁFICAS DE VENTAS", m, y);
+                y += 5;
+
+                const salesCharts = document.querySelectorAll('#chartVentasMes, #chartIngresosMes');
+                for (const canvas of salesCharts) {
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const ratio = canvas.height / canvas.width;
+                    const imgW = (pw - m * 2 - 5) / 2;
+                    const imgH = imgW * ratio;
+                    const xPos = canvas.id === 'chartVentasMes' ? m : m + imgW + 5;
+                    doc.addImage(imgData, 'PNG', xPos, y, imgW, imgH);
+                }
+
+                // === PAGE 2: Embudo + Descartados ===
+                doc.addPage();
+                doc.setFillColor(15, 23, 42);
+                doc.rect(0, 0, pw, 20, 'F');
+                doc.setTextColor(203, 163, 101);
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.text("ANÁLISIS DEL EMBUDO Y DESCARTADOS", m, 13);
+                doc.setTextColor(255,255,255);
                 doc.setFontSize(8);
-                doc.text("Generado automáticamente por Sweethome Compass CRM", pageWidth / 2, 280, { align: 'center' });
+                doc.text(fecha, pw - m, 13, { align: 'right' });
+
+                y = 30;
+                const funnelCharts = document.querySelectorAll('#chartEstados, #chartZonas, #chartPerdidas, #chartOperacion');
+                const chartW = (pw - m * 2 - 15) / 4;
+                funnelCharts.forEach((canvas, i) => {
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    const ratio = canvas.height / canvas.width;
+                    doc.addImage(imgData, 'PNG', m + i * (chartW + 5), y, chartW, chartW * ratio);
+                });
+
+                // Descartados table
+                y += 70;
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(15, 23, 42);
+                doc.text("CLIENTES NO CERRADOS — DETALLE", m, y);
+                y += 7;
+
+                // Table header
+                doc.setFillColor(241, 245, 249);
+                doc.rect(m, y, pw - m * 2, 7, 'F');
+                doc.setFontSize(7);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(100, 116, 139);
+                const cols = [m + 2, m + 45, m + 85, m + 115, m + 155];
+                doc.text("CLIENTE", cols[0], y + 5);
+                doc.text("ZONA", cols[1], y + 5);
+                doc.text("PRESUPUESTO", cols[2], y + 5);
+                doc.text("MOTIVO", cols[3], y + 5);
+                doc.text("FECHA", cols[4], y + 5);
+                y += 8;
+
+                const desc = datosGlobales?.detalleDescartados || [];
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(7);
+                desc.slice(0, 20).forEach((d, i) => {
+                    if (y > ph - 20) { doc.addPage(); y = 20; }
+                    const bg = i % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
+                    doc.setFillColor(...bg);
+                    doc.rect(m, y, pw - m * 2, 6, 'F');
+                    doc.setTextColor(30, 41, 59);
+                    doc.text((d.nombre || '').substring(0, 25), cols[0], y + 4);
+                    doc.setTextColor(100, 116, 139);
+                    doc.text((d.zona_interes || '—').substring(0, 22), cols[1], y + 4);
+                    doc.text(d.presupuesto_max ? formatMXN(d.presupuesto_max) : '—', cols[2], y + 4);
+                    doc.setTextColor(225, 29, 72);
+                    doc.text((d.motivo_descarte || 'No especificado').substring(0, 22), cols[3], y + 4);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(d.fecha_registro ? new Date(d.fecha_registro).toLocaleDateString('es-MX') : '—', cols[4], y + 4);
+                    y += 6;
+                });
+
+                // Footer on all pages
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setTextColor(148, 163, 184);
+                    doc.setFontSize(7);
+                    doc.text("Generado automáticamente por Sweethome Compass CRM", pw / 2, ph - 8, { align: 'center' });
+                    doc.text(`Página ${i} de ${totalPages}`, pw - m, ph - 8, { align: 'right' });
+                }
 
                 doc.save(`Reporte_C21_${new Date().toISOString().split('T')[0]}.pdf`);
                 

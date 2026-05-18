@@ -297,15 +297,126 @@ app.get('/api/admin/estadisticas', (req, res) => {
     const q2 = "SELECT zona_interes, COUNT(*) as total FROM clientes_prospectos GROUP BY zona_interes ORDER BY total DESC LIMIT 5";
     const q3 = "SELECT motivo_descarte, COUNT(*) as total FROM clientes_prospectos WHERE estado_seguimiento = 'Descartado' GROUP BY motivo_descarte";
     
-    db.query(q1, (err, res1) => {
+    // Ventas por mes (últimos 12 meses)
+    const q4 = `SELECT 
+        DATE_FORMAT(fecha_cierre, '%Y-%m') as mes,
+        COUNT(*) as cantidad,
+        SUM(precio_venta) as ingreso_total,
+        tipo_operacion
+        FROM ventas_cerradas 
+        WHERE fecha_cierre >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+        GROUP BY mes, tipo_operacion
+        ORDER BY mes ASC`;
+    
+    // Resumen general de ventas
+    const q5 = `SELECT 
+        COUNT(*) as total_ventas,
+        COALESCE(SUM(precio_venta), 0) as ingreso_total,
+        COALESCE(MAX(precio_venta), 0) as venta_max,
+        COALESCE(AVG(precio_venta), 0) as venta_promedio
+        FROM ventas_cerradas`;
+    
+    // Total prospectos para tasa de conversión
+    const q6 = "SELECT COUNT(*) as total FROM clientes_prospectos";
+    
+    // Tiempo promedio de cierre (días entre registro y cierre)
+    const q7 = `SELECT COALESCE(AVG(DATEDIFF(fecha_cierre, fecha_registro)), 0) as dias_promedio 
+        FROM clientes_prospectos 
+        WHERE estado_seguimiento = 'Cerrado' AND fecha_cierre IS NOT NULL`;
+    
+    // Distribución por tipo de operación
+    const q8 = `SELECT tipo_operacion, COUNT(*) as total, SUM(precio_venta) as monto 
+        FROM ventas_cerradas GROUP BY tipo_operacion`;
+    
+    // Detalle de descartados con nombre y motivo
+    const q9 = `SELECT nombre, motivo_descarte, fecha_registro, zona_interes, presupuesto_max 
+        FROM clientes_prospectos 
+        WHERE estado_seguimiento = 'Descartado' 
+        ORDER BY fecha_registro DESC`;
+
+    db.query(q1, (err, estados) => {
         if(err) return res.status(500).json({error: err.message});
-        db.query(q2, (err, res2) => {
+        db.query(q2, (err, zonas) => {
             if(err) return res.status(500).json({error: err.message});
-            db.query(q3, (err, res3) => {
+            db.query(q3, (err, perdidas) => {
                 if(err) return res.status(500).json({error: err.message});
-                res.json({ estados: res1, zonas: res2, perdidas: res3 });
+                db.query(q4, (err, ventasMensuales) => {
+                    if(err) return res.status(500).json({error: err.message});
+                    db.query(q5, (err, resumenVentas) => {
+                        if(err) return res.status(500).json({error: err.message});
+                        db.query(q6, (err, totalProspectos) => {
+                            if(err) return res.status(500).json({error: err.message});
+                            db.query(q7, (err, tiempoCierre) => {
+                                if(err) return res.status(500).json({error: err.message});
+                                db.query(q8, (err, distribOperacion) => {
+                                    if(err) return res.status(500).json({error: err.message});
+                                    db.query(q9, (err, detalleDescartados) => {
+                                        if(err) return res.status(500).json({error: err.message});
+                                        
+                                        const rv = resumenVentas[0] || {};
+                                        const totalP = totalProspectos[0]?.total || 0;
+                                        const tasaConversion = totalP > 0 ? ((rv.total_ventas / totalP) * 100).toFixed(1) : 0;
+                                        
+                                        res.json({
+                                            estados,
+                                            zonas,
+                                            perdidas,
+                                            detalleDescartados,
+                                            ventasMensuales,
+                                            resumen: {
+                                                total_ventas: rv.total_ventas || 0,
+                                                ingreso_total: parseFloat(rv.ingreso_total) || 0,
+                                                comision_total: parseFloat(rv.ingreso_total) * 0.035 || 0,
+                                                venta_max: parseFloat(rv.venta_max) || 0,
+                                                venta_promedio: parseFloat(rv.venta_promedio) || 0,
+                                                tasa_conversion: parseFloat(tasaConversion),
+                                                dias_promedio_cierre: Math.round(tiempoCierre[0]?.dias_promedio || 0),
+                                                total_prospectos: totalP,
+                                                total_descartados: perdidas.reduce((sum, p) => sum + p.total, 0)
+                                            },
+                                            distribOperacion
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
             });
         });
+    });
+});
+
+// ==========================================
+// RUTA: REGISTRAR UNA VENTA CERRADA
+// ==========================================
+app.post('/api/admin/ventas/registrar', (req, res) => {
+    const { id_cliente, id_propiedad, precio_venta, tipo_operacion, notas } = req.body;
+    
+    if (!id_cliente || !precio_venta) {
+        return res.status(400).json({ status: 'error', message: 'Faltan datos obligatorios (cliente y precio).' });
+    }
+
+    const qInsert = `INSERT INTO ventas_cerradas (id_cliente, id_propiedad, precio_venta, tipo_operacion, notas, registrado_por)
+                     VALUES (?, ?, ?, ?, ?, ?)`;
+    const params = [id_cliente, id_propiedad || null, precio_venta, tipo_operacion || 'Venta', notas || null, req.usuario.id];
+
+    db.query(qInsert, params, (err) => {
+        if (err) return res.status(500).json({ status: 'error', message: 'Error al registrar la venta: ' + err.message });
+
+        // Actualizar estado del cliente a Cerrado y guardar fecha_cierre
+        db.query('UPDATE clientes_prospectos SET estado_seguimiento = ?, fecha_cierre = CURRENT_TIMESTAMP WHERE id_cliente = ?', 
+            ['Cerrado', id_cliente], (err2) => {
+                if (err2) console.error('Error al actualizar estado del cliente:', err2.message);
+                
+                // Marcar propiedad como no disponible si se vinculó una
+                if (id_propiedad) {
+                    db.query("UPDATE propiedades SET estatus_propiedad = 'No Disponible' WHERE id_propiedad = ?", [id_propiedad], () => {});
+                }
+                
+                res.json({ status: 'success', message: '¡Venta registrada exitosamente!' });
+            }
+        );
     });
 });
 

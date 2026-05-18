@@ -175,7 +175,7 @@ window.mostrarNotificacion = function(mensaje, tipo = 'success') {
 };
 
 // ==========================================
-// CONEXIÓN SSE PARA NOTIFICACIONES EN TIEMPE REAL
+// CONEXIÓN SSE PARA NOTIFICACIONES EN TIEMPO REAL (OPTIMIZADO)
 // ==========================================
 function inicializarSSE() {
     const sse = new EventSource(`${window.API_BASE_URL}/admin/sse?token=${window.adminToken || ''}`);
@@ -183,11 +183,22 @@ function inicializarSSE() {
     sse.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
+            
+            // 🔔 ESCUCHAR EL ESTADO DEL PROCESAMIENTO DEL PDF POR LA IA
             if (data.type === 'pdf_status') {
-                mostrarNotificacion(data.message, data.status);
                 
-                if (data.status === 'success' && typeof cargarInventarioCompleto === 'function') {
-                    cargarInventarioCompleto();
+                if (data.status === 'success') {
+                    // Si todo salió chido, muestra la alerta en verde con el éxito
+                    mostrarNotificacion(data.message, 'success');
+                    
+                    // 🚀 TRUCO EN VIVO: Si el asesor está parado en la pestaña de inventario,
+                    // recargamos el catálogo automáticamente para que vea su nueva propiedad al instante.
+                    if (typeof cargarInventarioCompleto === 'function') {
+                        cargarInventarioCompleto();
+                    }
+                } else if (data.status === 'error') {
+                    // Si la IA tronó, te avisa de inmediato con una alerta en rojo
+                    mostrarNotificacion(data.message, 'error');
                 }
             }
         } catch (e) {
@@ -300,6 +311,10 @@ async function actualizarEstadoCliente(id, estado) {
         mostrarModalDescarte(id);
         return;
     }
+    if (estado === 'Cerrado') {
+        mostrarModalCierre(id);
+        return;
+    }
     try {
         await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/estado`, {
             method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado })
@@ -309,6 +324,129 @@ async function actualizarEstadoCliente(id, estado) {
         aplicarFiltroClientes();
         mostrarNotificacion(`Estado cambiado a: ${estado}`, 'info');
     } catch { mostrarNotificacion("Error al actualizar estado.", 'error'); }
+}
+
+// ==========================================
+// MODAL: REGISTRAR VENTA / CIERRE
+// ==========================================
+async function mostrarModalCierre(idCliente) {
+    const existing = document.getElementById('modalCierreCustom');
+    if (existing) existing.remove();
+
+    // Obtener propiedades disponibles para el selector
+    let propiedadesOptions = '<option value="">Sin vincular propiedad</option>';
+    try {
+        const resProp = await fetch(`${window.API_BASE_URL}/admin/propiedades`);
+        const dataProp = await resProp.json();
+        if (dataProp.status === 'success') {
+            dataProp.data.filter(p => p.estatus_propiedad === 'Disponible').forEach(p => {
+                propiedadesOptions += `<option value="${p.id_propiedad}" data-precio="${p.precio}">${p.tipo_propiedad} - ${p.zona} ($${parseFloat(p.precio).toLocaleString('es-MX')})</option>`;
+            });
+        }
+    } catch(e) { console.error('Error cargando propiedades:', e); }
+
+    const div = document.createElement('div');
+    div.id = 'modalCierreCustom';
+    div.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4';
+    div.innerHTML = `
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                    <i data-lucide="trophy" class="w-5 h-5 text-emerald-500"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Registrar Venta Cerrada</h3>
+                    <p class="text-xs text-slate-500">Registra los detalles del cierre para las métricas.</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 mb-5">
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">Propiedad vendida</label>
+                    <select id="cierrePropiedad" onchange="autoFillPrecio()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer">
+                        ${propiedadesOptions}
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">Precio de venta (MXN) *</label>
+                    <input type="number" id="cierrePrecio" placeholder="Ej. 2500000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" required>
+                    <p class="text-[10px] text-slate-400 mt-1">Tu comisión (3.5%): <span id="cierreComisionPreview" class="font-bold text-emerald-600">$0</span></p>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">Tipo de operación</label>
+                    <select id="cierreTipoOp" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer">
+                        <option value="Venta">Venta</option>
+                        <option value="Renta">Renta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">Notas (opcional)</label>
+                    <textarea id="cierreNotas" rows="2" placeholder="Detalles adicionales..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 resize-none"></textarea>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="cancelarCierre()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer">Cancelar</button>
+                <button onclick="confirmarCierre(${idCliente})" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-colors cursor-pointer flex items-center justify-center gap-2">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i> Registrar Cierre
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(div);
+    if (window.lucide) lucide.createIcons();
+
+    // Auto-update commission preview
+    document.getElementById('cierrePrecio').addEventListener('input', (e) => {
+        const precio = parseFloat(e.target.value) || 0;
+        document.getElementById('cierreComisionPreview').textContent = '$' + (precio * 0.035).toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    });
+}
+
+function autoFillPrecio() {
+    const sel = document.getElementById('cierrePropiedad');
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.dataset.precio) {
+        const precioInput = document.getElementById('cierrePrecio');
+        precioInput.value = opt.dataset.precio;
+        precioInput.dispatchEvent(new Event('input'));
+    }
+}
+
+function cancelarCierre() {
+    document.getElementById('modalCierreCustom')?.remove();
+    aplicarFiltroClientes();
+}
+
+async function confirmarCierre(idCliente) {
+    const precio = parseFloat(document.getElementById('cierrePrecio').value);
+    if (!precio || precio <= 0) {
+        mostrarNotificacion("Debes ingresar un precio de venta válido.", "error");
+        return;
+    }
+
+    const idPropiedad = document.getElementById('cierrePropiedad').value || null;
+    const tipoOp = document.getElementById('cierreTipoOp').value;
+    const notas = document.getElementById('cierreNotas').value.trim() || null;
+
+    document.getElementById('modalCierreCustom')?.remove();
+
+    try {
+        const res = await fetch(`${window.API_BASE_URL}/admin/ventas/registrar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_cliente: idCliente, id_propiedad: idPropiedad, precio_venta: precio, tipo_operacion: tipoOp, notas })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const c = window.clientesGlobal.find(x => x.id_cliente === idCliente);
+            if (c) c.estado_seguimiento = 'Cerrado';
+            aplicarFiltroClientes();
+            mostrarNotificacion(`🎉 ¡Venta registrada! Comisión: $${(precio * 0.035).toLocaleString('es-MX')}`, 'success');
+        } else {
+            mostrarNotificacion(data.message || 'Error al registrar venta.', 'error');
+        }
+    } catch { mostrarNotificacion("Error de conexión al registrar la venta.", 'error'); }
 }
 
 function mostrarModalDescarte(id) {

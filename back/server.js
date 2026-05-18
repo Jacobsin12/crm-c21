@@ -36,8 +36,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors()); 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// ==========================================
+// AJUSTE: LÍMITES AMPLIADOS PARA PETICIONES PESADAS
+// ==========================================
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ==========================================
 // ENMASCARAMIENTO DE RUTAS (URLs Limpias)
@@ -199,7 +203,7 @@ function broadcastSSE(data) {
 }
 
 // ==========================================
-// RUTA 1: SUBIR FICHAS TÉCNICAS AL INVENTARIO
+// RUTA 1: SUBIR FICHAS TÉCNICAS AL INVENTARIO (AJUSTADA PARA VENV)
 // ==========================================
 app.post('/api/admin/subir-fichas', upload, (req, res) => {
     if (!req.files || req.files.length === 0) {
@@ -214,7 +218,9 @@ app.post('/api/admin/subir-fichas', upload, (req, res) => {
     console.log(`\n🤖 Node.js recibió ${req.files.length} archivo(s). Procesando en segundo plano...`);
 
     const scriptPath = path.join(__dirname, 'importador_pdf.py');
-    const comando = `python "${scriptPath}" ${rutasArchivos}`;
+    
+    // 🛠️ SE FORZA EL USO DEL PYTHON DENTRO DEL ENTORNO VIRTUAL
+    const comando = `"/home/ceciramirez066/C21/back/venv/bin/python" "${scriptPath}" ${rutasArchivos}`;
 
     exec(comando, (error, stdout, stderr) => {
         req.files.forEach(file => { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); });
@@ -226,7 +232,6 @@ app.post('/api/admin/subir-fichas', upload, (req, res) => {
         }
         console.log(`🖥️ Respuesta IA:\n${stdout}`);
         
-        // Extraer IDs guardados de los logs de stdout si es posible, o solo mandar éxito genérico
         broadcastSSE({ type: 'pdf_status', status: 'success', message: `¡${req.files.length} ficha(s) indexada(s) con éxito por la IA!` });
     });
 });
@@ -339,13 +344,13 @@ app.get('/api/admin/match/:id_cliente', (req, res) => {
             const exactas = [];
             const alternativas = [];
 
-            propiedades.forEach(prop => {
+            properties.forEach(prop => {
                 const precio = parseFloat(prop.precio);
                 const zonaProp = normalizar(prop.zona) + " " + normalizar(prop.direccion) + " " + normalizar(prop.titulo);
                 const tipoProp = normalizar(prop.tipo_propiedad);
                 const tipoOp = normalizar(prop.tipo_operacion);
                 
-                // Fuzzy Match de Tipo (Casa vs Casa en Condominio, Local vs Locales)
+                // Fuzzy Match de Tipo
                 let coincideTipoProp = false;
                 if (clienteTipoProp) {
                     if (clienteTipoProp.includes('local')) coincideTipoProp = tipoProp.includes('local');
@@ -364,37 +369,30 @@ app.get('/api/admin/match/:id_cliente', (req, res) => {
                 }
 
                 const dentroPresupuesto = precio <= maxPresupuesto;
-                const presupuestoExtendido = precio <= (maxPresupuesto * 1.30); // 30% de flexibilidad
+                const presupuestoExtendido = precio <= (maxPresupuesto * 1.30);
 
                 // Reglas de Clasificación
                 if (coincideTipoProp && coincideOperacion && coincideZona && dentroPresupuesto) {
-                    // MATCH EXACTO: Todo coincide
                     exactas.push(prop);
                 } else {
-                    // POSIBLES ALTERNATIVAS
-                    // 1. Todo bien, pero ligeramente fuera de presupuesto
                     if (coincideTipoProp && coincideOperacion && coincideZona && !dentroPresupuesto && presupuestoExtendido) {
                         alternativas.push(prop);
                     }
-                    // 2. Excelente precio y misma operación/propiedad, pero en otra zona
                     else if (coincideTipoProp && coincideOperacion && !coincideZona && dentroPresupuesto) {
                         alternativas.push(prop);
                     }
-                    // 3. (CASO ESPECIAL) Si la zona y presupuesto coinciden, pero la operación es diferente (Ej. Tiene 2 Millones para Renta, ofrecerle Venta)
                     else if (coincideTipoProp && coincideZona && dentroPresupuesto && !coincideOperacion) {
                         alternativas.push(prop);
                     }
                 }
             });
 
-            // Ordenar alternativas: Primero las de la misma operación y luego por precio
             alternativas.sort((a, b) => parseFloat(a.precio) - parseFloat(b.precio));
 
             res.json({
                 status: 'success',
                 cliente: cliente,
                 coincidencias_exactas: exactas,
-                // Quitar duplicados por id_propiedad en caso de cualquier error
                 alternativas_fuera_presupuesto: [...new Map(alternativas.map(item => [item.id_propiedad, item])).values()]
             });
         });
@@ -468,9 +466,8 @@ app.put('/api/admin/propiedades/:id/drive', (req, res) => {
     });
 });
 
-// Arrancar el servidor
 // ==========================================
-// RUTA 8: AUTENTICACIÓN GOOGLE CALENDAR
+// RUTA 8 (BIS): AUTENTICACIÓN GOOGLE CALENDAR
 // ==========================================
 app.get('/api/auth/google/url', (req, res) => {
     const url = oauth2Client.generateAuthUrl({
@@ -631,7 +628,7 @@ app.delete('/api/admin/calendario/:id', async (req, res) => {
             eventId: eventId,
         });
 
-        res.json({ status: 'success', message: 'Cita eliminada exitosamente.' });
+        res.json({ status: 'success', message: 'Cita correcta.' });
     } catch (error) {
         console.error('Error deleting event:', error);
         res.status(500).json({ status: 'error', message: 'Error al eliminar la cita.' });

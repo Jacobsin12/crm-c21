@@ -345,7 +345,7 @@
                             <i data-lucide="party-popper" class="w-8 h-8"></i>
                         </div>
                         <h2 class="text-2xl font-bold tracking-tight text-[var(--text-dark)]">¡Muchas gracias, ${datosRespuestas.nombre.split(' ')[0]}!</h2>
-                        <p class="text-slate-600 text-sm px-4">Tus requerimientos han sido asignados directamente a la gerencia de <strong class="text-[var(--gold-dark)]">Maria Cecilia Ramirez</strong>. Analizaremos las mejores opciones de inmediato.</p>
+                        <p class="text-slate-600 text-sm px-4">Tus requerimientos han sido asignados directamente a la gerencia de <strong class="text-[var(--gold-dark)]">Cecilia Ramirez</strong>. Analizaremos las mejores opciones de inmediato.</p>
                     </div>
                 `;
                 document.getElementById("wrapperProgress")?.remove();

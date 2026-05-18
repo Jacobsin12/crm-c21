@@ -56,7 +56,7 @@
                     <input type="tel" id="telefono" placeholder="Número de WhatsApp (10 dígitos)" required oninput="validarSoloNumeros(this)" maxlength="10" 
                         class="luxury-input w-full px-4 py-3">
                     
-                    <input type="email" id="correo" placeholder="Correo electrónico (Opcional)" 
+                    <input type="email" id="correo" placeholder="Correo electrónico *" required
                         class="luxury-input w-full px-4 py-3">
                 </div>
             `
@@ -293,11 +293,12 @@
 
             if (!nombre || nombre.length < 4) return mostrarAlerta("Por favor, ingresa tu nombre completo.");
             if (telefono.length < 10) return mostrarAlerta("El número de WhatsApp debe tener 10 dígitos.");
-            if (correo.length > 0 && !validarEmail(correo)) return mostrarAlerta("Por favor, ingresa un correo válido.");
+            if (!correo) return mostrarAlerta("Por favor, ingresa tu correo electrónico.");
+            if (!validarEmail(correo)) return mostrarAlerta("Por favor, ingresa un correo válido.");
             
             datosRespuestas.nombre = nombre;
             datosRespuestas.telefono = telefono;
-            datosRespuestas.correo = correo || null;
+            datosRespuestas.correo = correo;
         } 
         else if (paso.id === "zona_interes_paso") {
             if (datosRespuestas.zonas_seleccionadas.length === 0) return mostrarAlerta("Por favor, selecciona al menos una zona.");

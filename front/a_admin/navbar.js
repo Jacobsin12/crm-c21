@@ -80,8 +80,8 @@ function renderLuxuryNavbar(activePage) {
         </nav>
 
         <!-- MOBILE SIDEBAR MENU -->
-        <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
-        <div id="mobileMenuSidebar" class="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col p-6 rounded-l-3xl">
+        <div id="mobileMenuOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] hidden opacity-0 transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
+        <div id="mobileMenuSidebar" class="fixed top-0 right-0 h-full w-72 bg-white shadow-2xl z-50 isolate transform translate-x-full transition-transform duration-300 flex flex-col p-6 rounded-l-3xl">
             <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <i data-lucide="settings" class="w-5 h-5 text-[--gold-primary]"></i>

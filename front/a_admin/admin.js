@@ -238,6 +238,14 @@ function inicializarSSE() {
                     mostrarNotificacion(data.message, 'error');
                 }
             }
+            
+            // 🔔 ESCUCHAR EL ESTADO DE NUEVO PROSPECTO
+            if (data.type === 'nuevo_prospecto') {
+                mostrarNotificacion(data.message, 'success');
+                if (document.getElementById("tablaClientes") && typeof cargarClientes === 'function') {
+                    cargarClientes(data.nuevoId);
+                }
+            }
         } catch (e) {
             console.error("Error parseando SSE:", e);
         }
@@ -258,7 +266,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 window.clientesGlobal = [];
 
-async function cargarClientes() {
+async function cargarClientes(nuevoId = null) {
     const tabla = document.getElementById("tablaClientes");
     if (!tabla) return;
     
@@ -268,7 +276,7 @@ async function cargarClientes() {
 
         if (res.status === "success") {
             window.clientesGlobal = res.data;
-            aplicarFiltroClientes();
+            aplicarFiltroClientes(nuevoId);
         } else {
             tabla.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">No hay prospectos.</td></tr>`;
         }
@@ -277,7 +285,7 @@ async function cargarClientes() {
     }
 }
 
-function aplicarFiltroClientes() {
+function aplicarFiltroClientes(nuevoId = null) {
     const tabla = document.getElementById("tablaClientes");
     if (!tabla) return;
 
@@ -287,8 +295,16 @@ function aplicarFiltroClientes() {
     if (filtrados.length > 0) {
         tabla.innerHTML = filtrados.map(c => {
             const requiereSeguimiento = c.estado_seguimiento !== 'Cerrado' && (!c.fecha_ultimo_contacto || (new Date() - new Date(c.fecha_ultimo_contacto)) / (1000 * 60 * 60 * 24) > 3);
+            
+            const esNuevo = nuevoId && (c.id_cliente === nuevoId || c.id_cliente === Number(nuevoId));
+            const trClass = esNuevo ? "bg-amber-100/60 shadow-[inset_0_0_15px_rgba(212,175,55,0.3)] transition-all duration-1000" : "hover:bg-slate-50/80 transition-colors duration-1000";
+            
+            const fechaObj = c.fecha_registro ? new Date(c.fecha_registro) : new Date();
+            const fechaStr = fechaObj.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+            const horaStr = fechaObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
             return `
-            <tr class="hover:bg-slate-50/80 transition-colors">
+            <tr id="cliente-${c.id_cliente}" class="${trClass}">
                 <td class="p-3">
                     <div class="font-bold text-slate-900 flex items-center gap-2">
                         ${c.nombre}
@@ -297,7 +313,10 @@ function aplicarFiltroClientes() {
                             <i data-lucide="message-circle" class="w-4 h-4"></i>
                         </a>
                     </div>
-                    <div class="text-slate-400 text-[11px]">${c.telefono}</div>
+                    <div class="text-slate-400 text-[11px] font-medium">${c.telefono}</div>
+                    <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                        <i data-lucide="clock" class="w-3 h-3 text-[--gold-primary]"></i> ${fechaStr} a las ${horaStr}
+                    </div>
                 </td>
                 <td class="p-3">
                     <span class="bg-amber-50 text-[--gold-dark] px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border border-amber-200/50">${c.tipo_operacion_buscada}</span>
@@ -329,6 +348,15 @@ function aplicarFiltroClientes() {
         tabla.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">No hay prospectos en este estado.</td></tr>`;
     }
     if (window.lucide) lucide.createIcons();
+
+    if (nuevoId) {
+        setTimeout(() => {
+            const tr = document.getElementById(`cliente-${nuevoId}`);
+            if (tr) {
+                tr.className = "hover:bg-slate-50/80 transition-colors duration-1000";
+            }
+        }, 5000);
+    }
 }
 
 async function registrarContactoSeguimiento(id, phone, name) {

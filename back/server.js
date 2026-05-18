@@ -281,6 +281,11 @@ app.post('/api/clientes/perfilar', (req, res) => {
             }
         });
 
+        // ENVIAR EVENTO EN TIEMPO REAL AL DASHBOARD
+        if (typeof broadcastSSE === 'function') {
+            broadcastSSE({ type: 'nuevo_prospecto', nuevoId: result.insertId, message: '¡Nuevo prospecto registrado!' });
+        }
+
         res.json({ status: 'success', message: '¡Perfilamiento registrado con éxito! Tu asesor se comunicará contigo.' });
     });
 });

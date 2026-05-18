@@ -344,7 +344,7 @@ app.get('/api/admin/match/:id_cliente', (req, res) => {
             const exactas = [];
             const alternativas = [];
 
-            properties.forEach(prop => {
+            propiedades.forEach(prop => {
                 const precio = parseFloat(prop.precio);
                 const zonaProp = normalizar(prop.zona) + " " + normalizar(prop.direccion) + " " + normalizar(prop.titulo);
                 const tipoProp = normalizar(prop.tipo_propiedad);

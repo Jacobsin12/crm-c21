@@ -41,7 +41,7 @@ window.fetch = async function() {
 };
 
 // ==========================================
-// NOTIFICACIONES PUSH (PWA)
+// NOTIFICACIONES PUSH (PWA) — BLINDADO CONTRA BUCLES
 // ==========================================
 async function suscribirPush() {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
@@ -68,7 +68,12 @@ async function suscribirPush() {
                 // Ocultar banner si existe
                 const banner = document.getElementById('pushBanner');
                 if (banner) banner.remove();
-                mostrarNotificacion('¡Notificaciones activadas! 🔔', 'success');
+
+                // 🛠️ CONTROL: Solo muestra la alerta la primera vez que se activa de verdad
+                if (!localStorage.getItem('push_suscrito')) {
+                    mostrarNotificacion('¡Notificaciones activadas! 🔔', 'success');
+                    localStorage.setItem('push_suscrito', 'true');
+                }
             }
         } catch (e) {
             console.error('Push Registration failed', e);
@@ -95,10 +100,11 @@ if (!window.location.pathname.includes('login.html')) {
             await navigator.serviceWorker.register('/sw.js').catch(() => {});
         }
         
-        // Verificar si ya tiene permiso
+        // 🛠️ CONTROL: Si ya tiene el permiso Y ya está guardado en localStorage, se queda callado
         if ('Notification' in window && Notification.permission === 'granted') {
-            // Ya tiene permiso, suscribir silenciosamente
-            setTimeout(suscribirPush, 1000);
+            if (!localStorage.getItem('push_suscrito')) {
+                setTimeout(suscribirPush, 1000);
+            }
         } else if ('Notification' in window && Notification.permission !== 'denied') {
             // Mostrar banner para pedir permiso con gesto del usuario
             setTimeout(() => {
@@ -117,7 +123,7 @@ if (!window.location.pathname.includes('login.html')) {
                     <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-white cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
                 `;
                 document.body.appendChild(banner);
-                lucide.createIcons();
+                if (window.lucide) lucide.createIcons();
             }, 2000);
         }
     });
@@ -169,7 +175,7 @@ window.mostrarNotificacion = function(mensaje, tipo = 'success') {
 };
 
 // ==========================================
-// CONEXIÓN SSE PARA NOTIFICACIONES EN TIEMPO REAL
+// CONEXIÓN SSE PARA NOTIFICACIONES EN TIEMPE REAL
 // ==========================================
 function inicializarSSE() {
     const sse = new EventSource(`${window.API_BASE_URL}/admin/sse?token=${window.adminToken || ''}`);
@@ -180,7 +186,6 @@ function inicializarSSE() {
             if (data.type === 'pdf_status') {
                 mostrarNotificacion(data.message, data.status);
                 
-                // Si la IA terminó y estamos en inventario, recargamos silenciosamente
                 if (data.status === 'success' && typeof cargarInventarioCompleto === 'function') {
                     cargarInventarioCompleto();
                 }
@@ -275,7 +280,7 @@ function aplicarFiltroClientes() {
     } else {
         tabla.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">No hay prospectos en este estado.</td></tr>`;
     }
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 }
 
 async function registrarContactoSeguimiento(id, phone, name) {
@@ -351,7 +356,7 @@ function mostrarModalDescarte(id) {
 
 function cancelarDescarte() {
     document.getElementById('modalDescarteCustom').remove();
-    aplicarFiltroClientes(); // Revertir el select visualmente al estado anterior
+    aplicarFiltroClientes();
 }
 
 async function confirmarDescarte(id) {
@@ -367,11 +372,14 @@ async function confirmarDescarte(id) {
         }
         motivoSeleccionado = otroInput;
     } else if (!motivoSeleccionado) {
-        mostrarNotificacion("Por favor selecciona un motivo.", "error");
+        const modal = document.getElementById('modalDescarteCustom');
+        if (modal) modal.remove();
+        aplicarFiltroClientes();
         return;
     }
     
-    document.getElementById('modalDescarteCustom').remove();
+    const targetModal = document.getElementById('modalDescarteCustom');
+    if (targetModal) targetModal.remove();
     
     try {
         await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/estado`, {
@@ -402,7 +410,7 @@ async function ejecutarMatchmaking(idCliente) {
             contenedorExactas.innerHTML = res.coincidencias_exactas.length === 0 ? `<p class="text-slate-400 text-xs col-span-2 italic">No hay propiedades exactas disponibles.</p>` : res.coincidencias_exactas.map(p => generarTarjetaPropiedad(p)).join('');
             contenedorAlternativas.innerHTML = res.alternativas_fuera_presupuesto.length === 0 ? `<p class="text-slate-400 text-xs col-span-2 italic">No hay alternativas que ofrecer en este rango.</p>` : res.alternativas_fuera_presupuesto.map(p => generarTarjetaPropiedad(p)).join('');
             modal.classList.remove("hidden");
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
     } catch (error) {
         alert("Error al ejecutar el algoritmo de cruce.");
@@ -497,11 +505,9 @@ async function actualizarEstatusPropiedad(id, estatus) {
             method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estatus })
         });
         
-        // Actualizar en el estado global y re-renderizar para reflejar los cambios visualmente
         const p = window.inventarioGlobal?.find(x => x.id_propiedad === id);
         if (p) p.estatus_propiedad = estatus;
         
-        // Si estamos en inventario, re-filtrar/renderizar
         if (typeof aplicarFiltrosInventario === 'function') {
             aplicarFiltrosInventario();
         }
@@ -536,19 +542,23 @@ function manejarArchivos(files) {
 function actualizarLista() {
     const fileList = document.getElementById("fileList");
     const btn = document.getElementById("btnProcesarPdf");
+    if (!fileList) return;
     fileList.innerHTML = archivosEnCola.map((f, i) => `
         <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
             <span class="truncate pr-4"><i data-lucide="file-text" class="inline w-3.5 h-3.5 mr-1 text-slate-400"></i> ${f.name}</span>
             <button type="button" onclick="archivosEnCola.splice(${i},1); actualizarLista();" class="text-rose-500 cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
         </div>
     `).join('');
-    if (archivosEnCola.length > 0) btn.classList.remove("hidden"); else btn.classList.add("hidden");
-    lucide.createIcons();
+    if (btn) {
+        if (archivosEnCola.length > 0) btn.classList.remove("hidden"); else btn.classList.add("hidden");
+    }
+    if (window.lucide) lucide.createIcons();
 }
 
 document.getElementById("btnProcesarPdf")?.addEventListener("click", async () => {
     const btn = document.getElementById("btnProcesarPdf");
-    btn.disabled = true; btn.innerHTML = `Subiendo... <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>`; lucide.createIcons();
+    if (!btn) return;
+    btn.disabled = true; btn.innerHTML = `Subiendo... <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>`; if (window.lucide) lucide.createIcons();
     
     const formData = new FormData(); 
     archivosEnCola.forEach(f => formData.append("fichas", f));
@@ -569,7 +579,7 @@ document.getElementById("btnProcesarPdf")?.addEventListener("click", async () =>
     } finally { 
         btn.disabled = false; 
         btn.innerHTML = `Procesar con IA <i data-lucide="cpu" class="w-4 h-4"></i>`; 
-        lucide.createIcons(); 
+        if (window.lucide) lucide.createIcons(); 
     }
 });
 
@@ -589,7 +599,7 @@ async function cargarInventarioCompleto() {
 
         if (res.status === "success") {
             window.inventarioGlobal = res.data;
-            aplicarFiltrosInventario(); // Renderiza usando los filtros actuales
+            aplicarFiltrosInventario(); 
         } else {
             grid.innerHTML = `<p class="text-rose-500 text-xs text-center col-span-3">No se pudo cargar el inventario: ${res.message}</p>`;
         }
@@ -634,5 +644,5 @@ function aplicarFiltrosInventario() {
     } else {
         grid.innerHTML = propiedadesFiltradas.map(p => generarTarjetaPropiedad(p)).join('');
     }
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 }

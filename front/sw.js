@@ -1,42 +1,33 @@
-const CACHE_NAME = 'crm-c21-cache-v2';
-const ASSETS = [
-  '/a_cliente/index.html',
-  '/a_cliente/cliente.js',
-  '/assets/css/global.css',
-  '/assets/js/api.js',
-  '/assets/icons/c21.png'
-];
+// sw.js - Versión 100% en vivo sin caché offline
+const CACHE_NAME = 'crm-c21-kill-cache';
 
-// Instalar el Service Worker y cachear archivos base
+// Al instalar, forzamos la activación de inmediato sin guardar NADA
 self.addEventListener('install', (e) => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
 });
 
-// Activar y limpiar cachés viejos
+// Al activar, EXTERMINAMOS todas las cachés del disco del celular
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)));
-    })
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          console.log('[SW] Destruyendo caché vieja:', key);
+          return caches.delete(key);
+        })
+      );
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Responder desde la caché si no hay internet
+// INTERCEPTOR DE RED: Obliga a ir a internet SIEMPRE en vivo. Cero offline.
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request);
-    })
-  );
+  e.respondWith(fetch(e.request));
 });
 
-// Push Notifications
+// ==========================================
+// PUSH NOTIFICATIONS (Mantiene tus alertas vivas)
+// ==========================================
 self.addEventListener('push', function(event) {
   if (event.data) {
     const data = event.data.json();

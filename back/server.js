@@ -189,6 +189,7 @@ app.get('/api/admin/sse', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Evita que Nginx bloquee los eventos
     
     // Enviar comentario inicial para mantener conexión
     res.write(': keep-alive\n\n');
@@ -232,7 +233,15 @@ app.post('/api/admin/subir-fichas', upload, (req, res) => {
         }
         console.log(`🖥️ Respuesta IA:\n${stdout}`);
         
-        broadcastSSE({ type: 'pdf_status', status: 'success', message: `¡${req.files.length} ficha(s) indexada(s) con éxito por la IA!` });
+        // Extraer los IDs creados del stdout del script de Python
+        const idsGuardados = [...stdout.matchAll(/Guardado exitoso con ID: (\w+)/g)].map(m => m[1]);
+        
+        broadcastSSE({ 
+            type: 'pdf_status', 
+            status: 'success', 
+            message: `¡${req.files.length} ficha(s) indexada(s) con éxito por la IA!`,
+            nuevosIds: idsGuardados
+        });
     });
 });
 

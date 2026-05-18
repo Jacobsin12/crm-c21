@@ -193,8 +193,8 @@ function inicializarSSE() {
                     
                     // 🚀 TRUCO EN VIVO: Si el asesor está parado en la pestaña de inventario,
                     // recargamos el catálogo automáticamente para que vea su nueva propiedad al instante.
-                    if (typeof cargarInventarioCompleto === 'function') {
-                        cargarInventarioCompleto();
+                    if (document.getElementById("gridInventario") && typeof cargarInventarioCompleto === 'function') {
+                        cargarInventarioCompleto(data.nuevosIds || []);
                     }
                 } else if (data.status === 'error') {
                     // Si la IA tronó, te avisa de inmediato con una alerta en rojo
@@ -587,11 +587,13 @@ function enviarOpcionesWhatsapp() {
     window.open(`https://wa.me/52${phone}?text=${encodeURIComponent(texto)}`, '_blank');
 }
 
-function generarTarjetaPropiedad(p) {
-    const bgClass = p.estatus_propiedad === 'Disponible' ? 'bg-slate-50' : 'bg-slate-200 opacity-75';
+function generarTarjetaPropiedad(p, isNew = false) {
+    const defaultBg = p.estatus_propiedad === 'Disponible' ? 'bg-slate-50' : 'bg-slate-200 opacity-75';
+    const bgClass = isNew ? '' : defaultBg;
+    const borderClass = isNew ? 'border-amber-500 border-2 bg-amber-50 shadow-[0_0_15px_rgba(212,175,55,0.4)] nueva-propiedad-destacada transition-all duration-1000' : 'border-slate-100 hover:border-amber-500/40 transition-all';
     
     return `
-        <div class="${bgClass} border border-slate-100 p-3 rounded-2xl flex flex-col justify-between hover:border-amber-500/40 transition-all cursor-pointer relative group" onclick="if('${p.carpeta_drive_fotos}') { window.open('${p.carpeta_drive_fotos}', '_blank'); } else { mostrarNotificacion('Esta propiedad aún no tiene fotos en Drive.', 'error'); }">
+        <div data-defaultbg="${defaultBg}" class="${bgClass} border ${borderClass} p-3 rounded-2xl flex flex-col justify-between cursor-pointer relative group" onclick="if('${p.carpeta_drive_fotos}') { window.open('${p.carpeta_drive_fotos}', '_blank'); } else { mostrarNotificacion('Esta propiedad aún no tiene fotos en Drive.', 'error'); }">
             <div>
                 <div class="flex justify-between items-start mb-1">
                     <span class="font-bold text-slate-900 text-sm flex items-center gap-2">
@@ -726,7 +728,7 @@ document.getElementById("btnProcesarPdf")?.addEventListener("click", async () =>
 // ==========================================
 window.inventarioGlobal = [];
 
-async function cargarInventarioCompleto() {
+async function cargarInventarioCompleto(nuevosIds = []) {
     const grid = document.getElementById("gridInventario");
     if (!grid) return;
 
@@ -737,7 +739,7 @@ async function cargarInventarioCompleto() {
 
         if (res.status === "success") {
             window.inventarioGlobal = res.data;
-            aplicarFiltrosInventario(); 
+            aplicarFiltrosInventario(nuevosIds); 
         } else {
             grid.innerHTML = `<p class="text-rose-500 text-xs text-center col-span-3">No se pudo cargar el inventario: ${res.message}</p>`;
         }
@@ -746,7 +748,7 @@ async function cargarInventarioCompleto() {
     }
 }
 
-function aplicarFiltrosInventario() {
+function aplicarFiltrosInventario(nuevosIds = []) {
     const grid = document.getElementById("gridInventario");
     if (!grid) return;
 
@@ -771,6 +773,14 @@ function aplicarFiltrosInventario() {
         return cumpleTipo && cumpleZona && cumplePrecio;
     });
 
+    if (nuevosIds && nuevosIds.length > 0) {
+        propiedadesFiltradas.sort((a, b) => {
+            const aNew = nuevosIds.includes(a.id_propiedad) ? 1 : 0;
+            const bNew = nuevosIds.includes(b.id_propiedad) ? 1 : 0;
+            return bNew - aNew;
+        });
+    }
+
     if (propiedadesFiltradas.length === 0) {
         grid.innerHTML = `
             <div class="p-6 border border-slate-100 rounded-2xl text-center bg-slate-50 col-span-3">
@@ -780,7 +790,19 @@ function aplicarFiltrosInventario() {
             </div>
         `;
     } else {
-        grid.innerHTML = propiedadesFiltradas.map(p => generarTarjetaPropiedad(p)).join('');
+        grid.innerHTML = propiedadesFiltradas.map(p => generarTarjetaPropiedad(p, nuevosIds && nuevosIds.includes(p.id_propiedad))).join('');
     }
     if (window.lucide) lucide.createIcons();
+
+    if (nuevosIds && nuevosIds.length > 0) {
+        setTimeout(() => {
+            document.querySelectorAll('.nueva-propiedad-destacada').forEach(el => {
+                el.classList.remove('border-amber-500', 'border-2', 'bg-amber-50', 'shadow-[0_0_15px_rgba(212,175,55,0.4)]');
+                el.classList.add('border-slate-100');
+                if(el.dataset.defaultbg) {
+                    el.classList.add(el.dataset.defaultbg);
+                }
+            });
+        }, 3000);
+    }
 }

@@ -270,7 +270,7 @@ app.post('/api/clientes/perfilar', (req, res) => {
                     title: '¡Nuevo Prospecto!',
                     body: `${nombre} busca un(a) ${tipo_propiedad} en ${zona_interes}`,
                     icon: '/assets/icons/c21.png',
-                    data: { url: '/a_admin/clientes.html' }
+                    data: { url: '/admin/clientes.html' }
                 });
                 rows.forEach(row => {
                     try {

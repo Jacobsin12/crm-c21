@@ -101,9 +101,9 @@ function renderLuxuryNavbar(activePage) {
             </div>
 
             <div class="space-y-3 flex-1">
-                <button onclick="if(typeof suscribirPush === 'function') { suscribirPush(); toggleMobileMenu(); } else { alert('Notificaciones no disponibles aquí.'); }" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-amber-50/50 border border-amber-500/20 text-slate-800 hover:bg-amber-50 transition-colors cursor-pointer text-sm font-bold shadow-sm">
+                <button id="btnPushMenu" onclick="if(typeof manejarPushToggle === 'function') { manejarPushToggle(); } else { alert('Notificaciones no disponibles aquí.'); }" class="w-full flex items-center gap-3 p-4 rounded-2xl bg-amber-50/50 border border-amber-500/20 text-slate-800 hover:bg-amber-50 transition-colors cursor-pointer text-sm font-bold shadow-sm">
                     <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-[--gold-dark]">
-                        <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                        <i data-lucide="bell-off" class="w-4 h-4"></i>
                     </div>
                     Activar Notificaciones
                 </button>
@@ -126,6 +126,35 @@ function renderLuxuryNavbar(activePage) {
     if(window.lucide) {
         lucide.createIcons();
     }
+    
+    // Configurar estado visual inicial del botón
+    if (typeof actualizarBotonPush === 'function') {
+        actualizarBotonPush();
+    }
+}
+
+function actualizarBotonPush() {
+    const btn = document.getElementById('btnPushMenu');
+    if (!btn) return;
+    
+    if (localStorage.getItem('push_suscrito')) {
+        btn.className = "w-full flex items-center gap-3 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-500/20 text-emerald-800 hover:bg-emerald-50 transition-colors cursor-pointer text-sm font-bold shadow-sm";
+        btn.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i>
+            </div>
+            Notificaciones Activadas
+        `;
+    } else {
+        btn.className = "w-full flex items-center gap-3 p-4 rounded-2xl bg-amber-50/50 border border-amber-500/20 text-slate-800 hover:bg-amber-50 transition-colors cursor-pointer text-sm font-bold shadow-sm";
+        btn.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-[--gold-dark]">
+                <i data-lucide="bell-off" class="w-4 h-4"></i>
+            </div>
+            Activar Notificaciones
+        `;
+    }
+    if(window.lucide) lucide.createIcons();
 }
 
 function toggleMobileMenu() {

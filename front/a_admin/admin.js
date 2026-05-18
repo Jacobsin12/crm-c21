@@ -118,6 +118,41 @@ async function suscribirPush() {
     }
 }
 
+async function desuscribirPush() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+            const register = await navigator.serviceWorker.ready;
+            const subscription = await register.pushManager.getSubscription();
+            if (subscription) {
+                await subscription.unsubscribe();
+            }
+            
+            await fetch('/api/admin/push/unsubscribe', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${window.adminToken}`
+                }
+            });
+            
+            localStorage.removeItem('push_suscrito');
+            mostrarNotificacion('Notificaciones desactivadas', 'info');
+        } catch (e) {
+            console.error('Error unsubscribing', e);
+        }
+    }
+}
+
+async function manejarPushToggle() {
+    if (localStorage.getItem('push_suscrito')) {
+        await desuscribirPush();
+    } else {
+        await suscribirPush();
+    }
+    if (typeof actualizarBotonPush === 'function') {
+        actualizarBotonPush();
+    }
+}
+
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');

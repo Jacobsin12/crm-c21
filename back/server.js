@@ -180,6 +180,15 @@ app.post('/api/admin/push/subscribe', (req, res) => {
     });
 });
 
+app.post('/api/admin/push/unsubscribe', (req, res) => {
+    const userId = req.usuario.id;
+    const q = 'UPDATE usuarios SET push_subscription = NULL WHERE id = ?';
+    db.execute(q, [userId], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(200).json({ message: 'Unsubscribed successfully' });
+    });
+});
+
 // ==========================================
 // NOTIFICACIONES GLOBALES (SSE)
 // ==========================================

@@ -289,7 +289,8 @@
                 const mesesKeys = Object.keys(mesesMap).sort();
                 const mesesLabels = mesesKeys.map(m => { const [y, mo] = m.split('-'); return MESES[parseInt(mo)-1] + ' ' + y; });
 
-                new Chart(document.getElementById('chartVentasMes'), {
+                if (window.chartVentasMesInst) window.chartVentasMesInst.destroy();
+                window.chartVentasMesInst = new Chart(document.getElementById('chartVentasMes'), {
                     type: 'bar',
                     data: {
                         labels: mesesLabels.length > 0 ? mesesLabels : ['Sin datos'],
@@ -305,7 +306,8 @@
                 });
 
                 // --- Ingresos + Comisión por Mes (líneas) ---
-                new Chart(document.getElementById('chartIngresosMes'), {
+                if (window.chartIngresosMesInst) window.chartIngresosMesInst.destroy();
+                window.chartIngresosMesInst = new Chart(document.getElementById('chartIngresosMes'), {
                     type: 'line',
                     data: {
                         labels: mesesLabels.length > 0 ? mesesLabels : ['Sin datos'],
@@ -336,7 +338,8 @@
                 });
 
                 // --- Estado del Embudo ---
-                new Chart(document.getElementById('chartEstados'), {
+                if (window.chartEstadosInst) window.chartEstadosInst.destroy();
+                window.chartEstadosInst = new Chart(document.getElementById('chartEstados'), {
                     type: 'doughnut',
                     data: {
                         labels: res.estados.map(e => e.estado_seguimiento),
@@ -351,7 +354,8 @@
                 });
 
                 // --- Zonas ---
-                new Chart(document.getElementById('chartZonas'), {
+                if (window.chartZonasInst) window.chartZonasInst.destroy();
+                window.chartZonasInst = new Chart(document.getElementById('chartZonas'), {
                     type: 'bar',
                     data: {
                         labels: res.zonas.map(z => z.zona_interes),
@@ -366,7 +370,8 @@
                 });
 
                 // --- Motivos Descarte ---
-                new Chart(document.getElementById('chartPerdidas'), {
+                if (window.chartPerdidasInst) window.chartPerdidasInst.destroy();
+                window.chartPerdidasInst = new Chart(document.getElementById('chartPerdidas'), {
                     type: 'pie',
                     data: {
                         labels: res.perdidas.map(p => p.motivo_descarte || 'No especificado'),
@@ -381,7 +386,8 @@
 
                 // --- Tipo Operación ---
                 const distrib = res.distribOperacion || [];
-                new Chart(document.getElementById('chartOperacion'), {
+                if (window.chartOperacionInst) window.chartOperacionInst.destroy();
+                window.chartOperacionInst = new Chart(document.getElementById('chartOperacion'), {
                     type: 'doughnut',
                     data: {
                         labels: distrib.length > 0 ? distrib.map(d => d.tipo_operacion) : ['Sin datos'],

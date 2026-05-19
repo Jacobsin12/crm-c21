@@ -386,6 +386,8 @@ app.get('/api/admin/clientes', (req, res) => {
 // ==========================================
 // RUTA DE ESTADÍSTICAS (ANALYTICS)
 // ==========================================
+// RUTA DE ESTADÍSTICAS (ANALYTICS)
+// ==========================================
 app.get('/api/admin/estadisticas', (req, res) => {
     const { mes, motivo_descarte } = req.query;
     const prospectosParams = [];
@@ -405,8 +407,10 @@ app.get('/api/admin/estadisticas', (req, res) => {
 
     const ventasParams = [];
     let ventasWhere = '';
+    let ventasWhereJoined = '';
     if (mes && mes !== 'Todos') {
         ventasWhere += " AND DATE_FORMAT(fecha_cierre, '%Y-%m') = ?";
+        ventasWhereJoined += " AND DATE_FORMAT(v.fecha_cierre, '%Y-%m') = ?";
         ventasParams.push(mes);
     }
 
@@ -456,29 +460,29 @@ app.get('/api/admin/estadisticas', (req, res) => {
         FROM ventas_cerradas v 
         LEFT JOIN clientes_prospectos c ON v.id_cliente = c.id_cliente 
         LEFT JOIN propiedades p ON v.id_propiedad = p.id_propiedad 
-        WHERE 1=1` + ventasWhere + `
+        WHERE 1=1` + ventasWhereJoined + `
         ORDER BY v.fecha_cierre DESC
         LIMIT 100`;
 
-    db.query(q1, (err, estados) => {
+    db.query(q1, prospectosParams, (err, estados) => {
         if(err) return res.status(500).json({error: err.message});
-        db.query(q2, (err, zonas) => {
+        db.query(q2, prospectosParams, (err, zonas) => {
             if(err) return res.status(500).json({error: err.message});
-            db.query(q3, (err, perdidas) => {
+            db.query(q3, prospectosParams, (err, perdidas) => {
                 if(err) return res.status(500).json({error: err.message});
-                db.query(q4, (err, ventasMensuales) => {
+                db.query(q4, ventasParams, (err, ventasMensuales) => {
                     if(err) return res.status(500).json({error: err.message});
-                    db.query(q5, (err, resumenVentas) => {
+                    db.query(q5, ventasParams, (err, resumenVentas) => {
                         if(err) return res.status(500).json({error: err.message});
-                        db.query(q6, (err, totalProspectos) => {
+                        db.query(q6, prospectosParams, (err, totalProspectos) => {
                             if(err) return res.status(500).json({error: err.message});
-                            db.query(q7, (err, tiempoCierre) => {
+                            db.query(q7, prospectosParams, (err, tiempoCierre) => {
                                 if(err) return res.status(500).json({error: err.message});
-                                db.query(q8, (err, distribOperacion) => {
+                                db.query(q8, ventasParams, (err, distribOperacion) => {
                                     if(err) return res.status(500).json({error: err.message});
-                                    db.query(q9, (err, detalleDescartados) => {
+                                    db.query(q9, prospectosParams, (err, detalleDescartados) => {
                                         if(err) return res.status(500).json({error: err.message});
-                                        db.query(q10, (err, ventasCerradas) => {
+                                        db.query(q10, ventasParams, (err, ventasCerradas) => {
                                             if(err) return res.status(500).json({error: err.message});
                                             const rv = resumenVentas[0] || {};
                                             const totalP = totalProspectos[0]?.total || 0;

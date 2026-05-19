@@ -209,34 +209,33 @@
         function llenarFiltros(res) {
             const mesSelect = document.getElementById('filtroMesReportes');
             const motivoSelect = document.getElementById('filtroMotivoReportes');
-            const mesesSet = new Set(['Todos']);
 
-            (res.ventasMensuales || []).forEach(item => {
-                mesesSet.add(item.mes);
-            });
-            (res.detalleDescartados || []).forEach(item => {
-                if (item.fecha_registro) {
-                    mesesSet.add(item.fecha_registro.slice(0, 7));
-                }
-            });
-            if (filtrosReportes.mes && filtrosReportes.mes !== 'Todos') {
-                mesesSet.add(filtrosReportes.mes);
+            // Solo poblamos la lista completa de opciones cuando cargamos por primera vez o con filtros reseteados ("Todos")
+            if (mesSelect.options.length <= 1 || (filtrosReportes.mes === 'Todos' && filtrosReportes.motivo_descarte === 'Todos')) {
+                const mesesSet = new Set(['Todos']);
+
+                (res.ventasMensuales || []).forEach(item => {
+                    if (item.mes) mesesSet.add(item.mes);
+                });
+                (res.detalleDescartados || []).forEach(item => {
+                    if (item.fecha_registro) {
+                        mesesSet.add(item.fecha_registro.slice(0, 7));
+                    }
+                });
+
+                mesSelect.innerHTML = Array.from(mesesSet).sort((a, b) => {
+                    if (a === 'Todos') return -1;
+                    if (b === 'Todos') return 1;
+                    return a.localeCompare(b);
+                }).map(m => `<option value="${m}">${m === 'Todos' ? 'Todos' : formatearMes(m)}</option>`).join('');
+
+                const motivos = ['Todos'].concat((res.perdidas || []).map(p => p.motivo_descarte === null ? '__SIN_MOTIVO__' : p.motivo_descarte));
+                motivoSelect.innerHTML = motivos.filter((value, index, self) => self.indexOf(value) === index)
+                    .map(m => `<option value="${m}">${m === '__SIN_MOTIVO__' ? 'No especificado' : m}</option>`)
+                    .join('');
             }
 
-            mesSelect.innerHTML = Array.from(mesesSet).sort((a, b) => {
-                if (a === 'Todos') return -1;
-                if (b === 'Todos') return 1;
-                return a.localeCompare(b);
-            }).map(m => `<option value="${m}">${m === 'Todos' ? 'Todos' : formatearMes(m)}</option>`).join('');
             mesSelect.value = filtrosReportes.mes;
-
-            const motivos = ['Todos'].concat((res.perdidas || []).map(p => p.motivo_descarte === null ? '__SIN_MOTIVO__' : p.motivo_descarte));
-            if (filtrosReportes.motivo_descarte && filtrosReportes.motivo_descarte !== 'Todos') {
-                motivos.push(filtrosReportes.motivo_descarte);
-            }
-            motivoSelect.innerHTML = motivos.filter((value, index, self) => self.indexOf(value) === index)
-                .map(m => `<option value="${m}">${m === '__SIN_MOTIVO__' ? 'No especificado' : m}</option>`)
-                .join('');
             motivoSelect.value = filtrosReportes.motivo_descarte;
         }
 

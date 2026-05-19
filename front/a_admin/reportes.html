@@ -282,9 +282,10 @@
                 // --- Ventas por Mes (barras) ---
                 const mesesMap = {};
                 (res.ventasMensuales || []).forEach(v => {
-                    if (!mesesMap[v.mes]) mesesMap[v.mes] = { cantidad: 0, ingreso: 0 };
+                    if (!mesesMap[v.mes]) mesesMap[v.mes] = { cantidad: 0, ingreso: 0, comision: 0 };
                     mesesMap[v.mes].cantidad += v.cantidad;
                     mesesMap[v.mes].ingreso += parseFloat(v.ingreso_total);
+                    mesesMap[v.mes].comision += parseFloat(v.comision_total || 0);
                 });
                 const mesesKeys = Object.keys(mesesMap).sort();
                 const mesesLabels = mesesKeys.map(m => { const [y, mo] = m.split('-'); return MESES[parseInt(mo)-1] + ' ' + y; });
@@ -323,8 +324,8 @@
                                 borderWidth: 2
                             },
                             {
-                                label: 'Comisión (3.5%)',
-                                data: mesesLabels.length > 0 ? mesesKeys.map(m => mesesMap[m].ingreso * 0.035) : [0],
+                                label: 'Tu Comisión Real',
+                                data: mesesLabels.length > 0 ? mesesKeys.map(m => mesesMap[m].comision) : [0],
                                 borderColor: '#7c3aed',
                                 backgroundColor: 'rgba(124,58,237,0.08)',
                                 fill: true,

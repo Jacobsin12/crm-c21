@@ -423,6 +423,7 @@ app.get('/api/admin/estadisticas', (req, res) => {
         DATE_FORMAT(fecha_cierre, '%Y-%m') as mes,
         COUNT(*) as cantidad,
         SUM(precio_venta) as ingreso_total,
+        SUM(comision) as comision_total,
         tipo_operacion
         FROM ventas_cerradas 
         WHERE fecha_cierre >= DATE_SUB(NOW(), INTERVAL 12 MONTH)` + ventasWhere + `
@@ -523,7 +524,7 @@ app.get('/api/admin/estadisticas', (req, res) => {
 // RUTA: REGISTRAR UNA VENTA CERRADA
 // ==========================================
 app.post('/api/admin/ventas/registrar', (req, res) => {
-    const { id_cliente, id_propiedad, precio_venta, tipo_operacion, notas, comision_porcentaje, comision } = req.body;
+    const { id_cliente, id_propiedad, precio_venta, tipo_operacion, notas, comision_porcentaje, comision_compartida, comision } = req.body;
     
     if (!id_cliente || !precio_venta) {
         return res.status(400).json({ status: 'error', message: 'Faltan datos obligatorios (cliente y precio).' });
@@ -531,12 +532,23 @@ app.post('/api/admin/ventas/registrar', (req, res) => {
 
     const parsedPrecio = parseFloat(precio_venta);
     const parsedComisionPct = parseFloat(comision_porcentaje);
+    const isCompartida = comision_compartida === 1 || comision_compartida === true;
+
     let comisionFinal;
     if (!Number.isNaN(parsedComisionPct) && parsedComisionPct >= 0) {
-        comisionFinal = parseFloat((parsedPrecio * parsedComisionPct / 100).toFixed(2));
+        // Fórmula de Comisión Century 21 Real:
+        // 1. Comisión Bruta Oficina = Precio de venta * (Porcentaje de comisión total / 100)
+        const comisionTotal = parsedPrecio * (parsedComisionPct / 100);
+        // 2. Neto Oficina tras deducir 8% de regalías a Century 21 México
+        const netoOficina = comisionTotal * 0.92;
+        // 3. Comisión Agente (45% del Neto Oficina)
+        const comisionAgente = netoOficina * 0.45;
+        // 4. Dividido entre 2 si es compartida con otro asesor
+        comisionFinal = isCompartida ? (comisionAgente / 2) : comisionAgente;
+        comisionFinal = parseFloat(comisionFinal.toFixed(2));
     } else {
         const parsedComision = parseFloat(comision);
-        comisionFinal = (!Number.isNaN(parsedComision) && parsedComision >= 0) ? parsedComision : parseFloat((parsedPrecio * 0.035).toFixed(2));
+        comisionFinal = (!Number.isNaN(parsedComision) && parsedComision >= 0) ? parsedComision : parseFloat((parsedPrecio * 0.06 * 0.92 * 0.45).toFixed(2));
     }
 
     const qInsert = `INSERT INTO ventas_cerradas (id_cliente, id_propiedad, precio_venta, comision, tipo_operacion, notas, registrado_por)

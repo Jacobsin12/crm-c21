@@ -784,12 +784,41 @@ async function mostrarModalCierre(idCliente) {
                 <div>
                     <label class="text-xs font-bold text-slate-600 mb-1 block">Precio de venta (MXN) *</label>
                     <input type="number" id="cierrePrecio" placeholder="Ej. 2500000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" required>
-                    <p class="text-[10px] text-slate-400 mt-1">Comisión estimada (3.5%): <span id="cierreComisionPreview" class="font-bold text-emerald-600">$0</span></p>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-600 mb-1 block">Comisión asignada (%)</label>
-                    <input type="number" id="cierreComision" step="0.1" placeholder="Ej. 3.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" min="0">
-                    <p class="text-[10px] text-slate-400 mt-1">Si no etiquetas un porcentaje, se usará 3.5% del precio.</p>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">Porcentaje de comisión total (%) *</label>
+                    <input type="number" id="cierreComision" step="0.1" value="6.0" placeholder="Ej. 6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" min="0" required>
+                </div>
+                <div class="flex items-center gap-2 py-1">
+                    <input type="checkbox" id="cierreCompartido" class="w-4 h-4 text-emerald-500 bg-slate-50 border border-slate-200 rounded focus:ring-emerald-400 cursor-pointer">
+                    <label for="cierreCompartido" class="text-xs font-bold text-slate-600 cursor-pointer">¿Comisión compartida? (Dividir al 50% entre 2)</label>
+                </div>
+                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner mt-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                        <i data-lucide="calculator" class="w-3.5 h-3.5 text-emerald-500"></i> Desglose de Comisión Real
+                    </h4>
+                    <div class="space-y-1.5 text-xs text-slate-600">
+                        <div class="flex justify-between">
+                            <span>Comisión Bruta Oficina (<span id="lblPorcentajeTotal">6.0</span>%):</span>
+                            <span id="cierreBrutoPreview" class="font-bold text-slate-700">$0</span>
+                        </div>
+                        <div class="flex justify-between text-rose-600">
+                            <span>Regalías Century 21 México (8%):</span>
+                            <span id="cierreRegaliasPreview" class="font-bold">-$0</span>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-200/60 pb-1 text-slate-700">
+                            <span>Neto Oficina (92%):</span>
+                            <span id="cierreNetoPreview" class="font-semibold">$0</span>
+                        </div>
+                        <div class="flex justify-between text-emerald-600 font-bold text-sm pt-1">
+                            <span>Tu Comisión Real (45%):</span>
+                            <span id="cierreComisionPreview">$0</span>
+                        </div>
+                        <div id="cierreCompartidoWrapper" class="hidden flex justify-between text-indigo-600 font-bold text-sm">
+                            <span>Dividido entre 2 asesores (50%):</span>
+                            <span id="cierreFinalPreview">$0</span>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-600 mb-1 block">Tipo de operación</label>
@@ -818,21 +847,46 @@ async function mostrarModalCierre(idCliente) {
     // Auto-update commission preview
     const cierrePrecioInput = document.getElementById('cierrePrecio');
     const cierreComisionInput = document.getElementById('cierreComision');
+    const cierreCompartidoCheckbox = document.getElementById('cierreCompartido');
+    
+    const lblPorcentajeTotal = document.getElementById('lblPorcentajeTotal');
+    const cierreBrutoPreview = document.getElementById('cierreBrutoPreview');
+    const cierreRegaliasPreview = document.getElementById('cierreRegaliasPreview');
+    const cierreNetoPreview = document.getElementById('cierreNetoPreview');
     const cierreComisionPreview = document.getElementById('cierreComisionPreview');
+    const cierreCompartidoWrapper = document.getElementById('cierreCompartidoWrapper');
+    const cierreFinalPreview = document.getElementById('cierreFinalPreview');
 
     function updateCierreComisionPreview() {
         const precio = parseFloat(cierrePrecioInput.value) || 0;
-        const porcentaje = parseFloat(cierreComisionInput.value);
-        if (!Number.isNaN(porcentaje) && porcentaje >= 0) {
-            const monto = precio * (porcentaje / 100);
-            cierreComisionPreview.textContent = '$' + monto.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-            return;
+        const porcentaje = parseFloat(cierreComisionInput.value) || 6.0;
+        const isCompartida = cierreCompartidoCheckbox.checked;
+
+        lblPorcentajeTotal.textContent = porcentaje.toFixed(1);
+
+        const bruto = precio * (porcentaje / 100);
+        const regalias = bruto * 0.08;
+        const neto = bruto * 0.92;
+        const tuComision = neto * 0.45;
+        const finalDividido = tuComision / 2;
+
+        cierreBrutoPreview.textContent = '$' + bruto.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        cierreRegaliasPreview.textContent = '-$' + regalias.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        cierreNetoPreview.textContent = '$' + neto.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        cierreComisionPreview.textContent = '$' + tuComision.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+
+        if (isCompartida) {
+            cierreCompartidoWrapper.classList.remove('hidden');
+            cierreFinalPreview.textContent = '$' + finalDividido.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        } else {
+            cierreCompartidoWrapper.classList.add('hidden');
         }
-        cierreComisionPreview.textContent = '$' + (precio * 0.035).toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
     }
 
     cierrePrecioInput.addEventListener('input', updateCierreComisionPreview);
     cierreComisionInput.addEventListener('input', updateCierreComisionPreview);
+    cierreCompartidoCheckbox.addEventListener('change', updateCierreComisionPreview);
+    updateCierreComisionPreview();
 }
 
 function autoFillPrecio() {
@@ -861,7 +915,14 @@ async function confirmarCierre(idCliente) {
     const tipoOp = document.getElementById('cierreTipoOp').value;
     const notas = document.getElementById('cierreNotas').value.trim() || null;
     const comisionInput = parseFloat(document.getElementById('cierreComision').value);
-    const comisionPorcentaje = (!Number.isNaN(comisionInput) && comisionInput >= 0) ? comisionInput : null;
+    const comisionPorcentaje = (!Number.isNaN(comisionInput) && comisionInput >= 0) ? comisionInput : 6.0;
+    const comisionCompartida = document.getElementById('cierreCompartido').checked ? 1 : 0;
+
+    // Calcular en el cliente la comisión real
+    const totalComision = precio * (comisionPorcentaje / 100);
+    const netoOficina = totalComision * 0.92;
+    const comisionAgente = netoOficina * 0.45;
+    const comisionFinal = comisionCompartida ? (comisionAgente / 2) : comisionAgente;
 
     document.getElementById('modalCierreCustom')?.remove();
 
@@ -869,15 +930,23 @@ async function confirmarCierre(idCliente) {
         const res = await fetch(`${window.API_BASE_URL}/admin/ventas/registrar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_cliente: idCliente, id_propiedad: idPropiedad, precio_venta: precio, tipo_operacion: tipoOp, notas, comision_porcentaje: comisionPorcentaje })
+            body: JSON.stringify({ 
+                id_cliente: idCliente, 
+                id_propiedad: idPropiedad, 
+                precio_venta: precio, 
+                tipo_operacion: tipoOp, 
+                notas, 
+                comision_porcentaje: comisionPorcentaje, 
+                comision_compartida: comisionCompartida,
+                comision: comisionFinal 
+            })
         });
         const data = await res.json();
         if (data.status === 'success') {
             const c = window.clientesGlobal.find(x => x.id_cliente === idCliente);
             if (c) c.estado_seguimiento = 'Cerrado';
             aplicarFiltroClientes();
-            const comValor = data.comision || (precio * 0.035);
-            mostrarNotificacion(`🎉 ¡Venta registrada! Comisión: $${parseFloat(comValor).toLocaleString('es-MX')}`, 'success');
+            mostrarNotificacion(`🎉 ¡Venta registrada! Tu Comisión Real: $${parseFloat(comisionFinal.toFixed(0)).toLocaleString('es-MX')}`, 'success');
         } else {
             mostrarNotificacion(data.message || 'Error al registrar venta.', 'error');
         }

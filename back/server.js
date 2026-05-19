@@ -98,6 +98,20 @@ const db = mysql.createPool({
     queueLimit: 0
 });
 
+// Auto-migración de comisiones históricas nulas usando la fórmula real C21
+db.query(`UPDATE ventas_cerradas 
+          SET comision = CASE 
+            WHEN notas LIKE '%compartida%' OR notas LIKE '%compartido%' THEN (precio_venta * 0.06 * 0.92 * 0.45) / 2
+            ELSE (precio_venta * 0.06 * 0.92 * 0.45)
+          END 
+          WHERE comision IS NULL`, (err, result) => {
+    if (err) {
+        console.error("⚠️ Error en auto-migración de comisiones:", err.message);
+    } else if (result.affectedRows > 0) {
+        console.log(`✅ Auto-migradas ${result.affectedRows} comisiones históricas de NULL a la nueva fórmula C21.`);
+    }
+});
+
 // ==========================================
 // RUTA DE LOGIN (NO PROTEGIDA)
 // ==========================================

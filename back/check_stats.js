@@ -27,7 +27,7 @@ db.query('SELECT COUNT(*) as count FROM ventas_cerradas', (err, rows) => {
     const q10 = `SELECT v.id, c.nombre, p.titulo AS propiedad_titulo, v.tipo_operacion, v.precio_venta, v.comision, v.fecha_cierre, c.zona_interes 
         FROM ventas_cerradas v 
         LEFT JOIN clientes_prospectos c ON v.id_cliente = c.id_cliente 
-        LEFT JOIN propiedades p ON v.id_propiedad = p.id_propiedad 
+        LEFT JOIN propiedades p ON v.id_propiedad COLLATE utf8mb4_unicode_ci = p.id_propiedad COLLATE utf8mb4_unicode_ci
         WHERE 1=1
         ORDER BY v.fecha_cierre DESC
         LIMIT 100`;

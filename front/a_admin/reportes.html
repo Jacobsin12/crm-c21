@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" href="../assets/icons/c21.png">
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../assets/icons/c21-icon-512.png">
-    <title>Reportes | Sweethome Compass Admin</title>
+    <title>Reportes | Century 21 Cecilia Ramirez</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -42,7 +42,9 @@
                     </select>
                 </div>
                 <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center justify-center">
-                    <button onclick="resetFiltrosReportes()" class="bg-slate-900 hover:bg-slate-800 text-white uppercase text-xs tracking-wide font-bold px-4 py-3 rounded-xl shadow-sm">Resetear filtros</button>
+                   <button onclick="resetFiltrosReportes()" class="bg-white hover:bg-slate-100 text-slate-900 border border-slate-200 uppercase text-xs tracking-wide font-bold px-4 py-3 rounded-xl shadow-sm transition-colors">
+    Resetear filtros
+</button>
                 </div>
             </div>
 
@@ -150,6 +152,7 @@
                         <thead>
                             <tr class="text-left text-[10px] font-bold uppercase text-slate-400 border-b border-slate-200">
                                 <th class="p-2">Cliente</th>
+                                <th class="p-2">Propiedad</th>
                                 <th class="p-2">Tipo</th>
                                 <th class="p-2">Precio</th>
                                 <th class="p-2">Comisión</th>
@@ -239,12 +242,13 @@
         function llenarTablaVentasCerradas(ventas) {
             const tbody = document.getElementById('tablaVentasCerradas');
             if (ventas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs italic">No hay ventas cerradas para este filtro.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400 text-xs italic">No hay ventas cerradas para este filtro.</td></tr>';
                 return;
             }
             tbody.innerHTML = ventas.map(v => `
                 <tr class="hover:bg-slate-100/50 transition-colors">
                     <td class="p-2 font-bold text-slate-800">${v.nombre || '—'}</td>
+                    <td class="p-2 text-slate-500 text-xs">${v.propiedad_titulo || 'Sin propiedad'}</td>
                     <td class="p-2 text-slate-500 text-xs">${v.tipo_operacion || '—'}</td>
                     <td class="p-2 text-slate-600 font-semibold text-xs">${formatMXN(v.precio_venta)}</td>
                     <td class="p-2 text-slate-600 font-semibold text-xs">${formatMXN(v.comision || 0)}</td>
@@ -561,6 +565,64 @@
                     doc.text((d.motivo_descarte || 'No especificado').substring(0, 22), cols[3], y + 4);
                     doc.setTextColor(148, 163, 184);
                     doc.text(d.fecha_registro ? new Date(d.fecha_registro).toLocaleDateString('es-MX') : '—', cols[4], y + 4);
+                    y += 6;
+                });
+
+                // === PAGE 3: Ventas cerradas ===
+                doc.addPage();
+                doc.setFillColor(15, 23, 42);
+                doc.rect(0, 0, pw, 20, 'F');
+                doc.setTextColor(203, 163, 101);
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.text("VENTAS CERRADAS — CASA VENDIDA Y COMISIÓN", m, 13);
+                doc.setTextColor(255,255,255);
+                doc.setFontSize(8);
+                doc.text(fecha, pw - m, 13, { align: 'right' });
+
+                y = 30;
+                doc.setFillColor(241, 245, 249);
+                doc.rect(m, y, pw - m * 2, 7, 'F');
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(100, 116, 139);
+                const vcols = [m + 2, m + 50, m + 110, m + 145, m + 175];
+                doc.text("CLIENTE", vcols[0], y + 5);
+                doc.text("PROPIEDAD", vcols[1], y + 5);
+                doc.text("PRECIO", vcols[2], y + 5);
+                doc.text("COMISIÓN", vcols[3], y + 5);
+                doc.text("FECHA", vcols[4], y + 5);
+                y += 8;
+
+                const ventas = datosGlobales?.ventasCerradas || [];
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(7);
+                ventas.forEach((v, i) => {
+                    if (y > ph - 20) {
+                        doc.addPage();
+                        y = 20;
+                        doc.setFillColor(241, 245, 249);
+                        doc.rect(m, y, pw - m * 2, 7, 'F');
+                        doc.setFontSize(8);
+                        doc.setFont("helvetica", "bold");
+                        doc.setTextColor(100, 116, 139);
+                        doc.text("CLIENTE", vcols[0], y + 5);
+                        doc.text("PROPIEDAD", vcols[1], y + 5);
+                        doc.text("PRECIO", vcols[2], y + 5);
+                        doc.text("COMISIÓN", vcols[3], y + 5);
+                        doc.text("FECHA", vcols[4], y + 5);
+                        y += 8;
+                    }
+                    const bg = i % 2 === 0 ? [255, 255, 255] : [248, 250, 252];
+                    doc.setFillColor(...bg);
+                    doc.rect(m, y, pw - m * 2, 6, 'F');
+                    doc.setTextColor(30, 41, 59);
+                    doc.text((v.nombre || '—').substring(0, 22), vcols[0], y + 4);
+                    doc.text((v.propiedad_titulo || 'Sin propiedad').substring(0, 22), vcols[1], y + 4);
+                    doc.text(formatMXN(v.precio_venta), vcols[2], y + 4);
+                    doc.text(formatMXN(v.comision || 0), vcols[3], y + 4);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(v.fecha_cierre ? new Date(v.fecha_cierre).toLocaleDateString('es-MX') : '—', vcols[4], y + 4);
                     y += 6;
                 });
 

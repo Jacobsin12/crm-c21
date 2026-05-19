@@ -452,9 +452,10 @@ app.get('/api/admin/estadisticas', (req, res) => {
         WHERE estado_seguimiento = 'Descartado'` + prospectosWhere + ` 
         ORDER BY fecha_registro DESC`;
 
-    const q10 = `SELECT v.id, c.nombre, v.tipo_operacion, v.precio_venta, v.comision, v.fecha_cierre, c.zona_interes 
+    const q10 = `SELECT v.id, c.nombre, p.titulo AS propiedad_titulo, v.tipo_operacion, v.precio_venta, v.comision, v.fecha_cierre, c.zona_interes 
         FROM ventas_cerradas v 
         LEFT JOIN clientes_prospectos c ON v.id_cliente = c.id_cliente 
+        LEFT JOIN propiedades p ON v.id_propiedad = p.id_propiedad 
         WHERE 1=1` + ventasWhere + `
         ORDER BY v.fecha_cierre DESC
         LIMIT 100`;

@@ -505,7 +505,11 @@
                 doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
                 doc.setTextColor(203, 163, 101);
-                doc.text("Century 21 — Rendimiento, Ventas y Comisiones", 45, 25);
+                let subTitulo = "Century 21 — Rendimiento, Ventas y Comisiones";
+                if (filtrosReportes.mes && filtrosReportes.mes !== 'Todos') {
+                    subTitulo += ` | Filtro: ${formatearMes(filtrosReportes.mes)}`;
+                }
+                doc.text(subTitulo, 45, 25);
                 const fecha = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(9);

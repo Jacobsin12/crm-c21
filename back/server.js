@@ -451,7 +451,7 @@ app.get('/api/admin/estadisticas', (req, res) => {
         COALESCE(SUM(comision), 0) as comision_total,
         COALESCE(MAX(precio_venta), 0) as venta_max,
         COALESCE(AVG(precio_venta), 0) as venta_promedio
-        FROM ventas_cerradas` + ventasWhere + `;`;
+        FROM ventas_cerradas WHERE 1=1` + ventasWhere + `;`;
     
     // Total prospectos para tasa de conversión
     const q6 = "SELECT COUNT(*) as total FROM clientes_prospectos WHERE 1=1" + prospectosWhere;

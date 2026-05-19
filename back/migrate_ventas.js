@@ -41,11 +41,11 @@ const run = async () => {
 
         try {
             await db.promise().query(`
-                ALTER TABLE ventas_cerradas ADD COLUMN IF NOT EXISTS comision DECIMAL(14,2) NULL;
+                ALTER TABLE ventas_cerradas ADD COLUMN comision DECIMAL(14,2) NULL;
             `);
             console.log('✅ Columna comision agregada a ventas_cerradas.');
         } catch (e) {
-            if (e.code === 'ER_DUP_FIELDNAME') {
+            if (e.code === 'ER_DUP_FIELDNAME' || e.code === 'ER_CANT_DROP_FIELD_OR_KEY') {
                 console.log('ℹ️  Columna comision ya existía en ventas_cerradas.');
             } else {
                 throw e;

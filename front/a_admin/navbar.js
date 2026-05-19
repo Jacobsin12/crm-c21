@@ -115,6 +115,11 @@ function renderLuxuryNavbar(activePage) {
     // Agregar padding al body para que el contenido no quede debajo de la navbar flotante en móvil
     document.body.classList.add('pb-28', 'md:pb-6');
 
+    // Crear un espaciador físico al final del body para asegurar que el último elemento sea visible y cliqueable sin cruzarse con la barra flotante
+    const bottomSpacer = document.createElement('div');
+    bottomSpacer.className = 'w-full h-32 md:hidden block shrink-0 clear-both pointer-events-none';
+    document.body.appendChild(bottomSpacer);
+
     if(window.lucide) {
         lucide.createIcons();
     }

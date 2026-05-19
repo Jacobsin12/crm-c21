@@ -747,17 +747,35 @@ async function mostrarModalCierre(idCliente) {
     const existing = document.getElementById('modalCierreCustom');
     if (existing) existing.remove();
 
-    // Obtener propiedades disponibles para el selector
-    let propiedadesOptions = '<option value="">Sin vincular propiedad</option>';
+    // Obtener propiedades disponibles para el selector y preparar soporte de filtrado
+    let propiedadesCargadas = [];
     try {
         const resProp = await fetch(`${window.API_BASE_URL}/admin/propiedades`);
         const dataProp = await resProp.json();
         if (dataProp.status === 'success') {
-            dataProp.data.filter(p => p.estatus_propiedad === 'Disponible').forEach(p => {
-                propiedadesOptions += `<option value="${p.id_propiedad}" data-precio="${p.precio}">${p.tipo_propiedad} - ${p.zona} ($${parseFloat(p.precio).toLocaleString('es-MX')})</option>`;
-            });
+            propiedadesCargadas = dataProp.data.filter(p => p.estatus_propiedad === 'Disponible');
         }
     } catch(e) { console.error('Error cargando propiedades:', e); }
+
+    function generarOpcionesPropiedades(filtro = 'Todos') {
+        let html = '<option value="">Sin vincular propiedad</option>';
+        propiedadesCargadas.forEach(p => {
+            // Soporta filtrado inteligente basado en subcadena del tipo de propiedad
+            const match = filtro === 'Todos' || p.tipo_propiedad.toLowerCase().includes(filtro.toLowerCase());
+            if (match) {
+                html += `<option value="${p.id_propiedad}" data-precio="${p.precio}">${p.tipo_propiedad} - ${p.zona} ($${parseFloat(p.precio).toLocaleString('es-MX')})</option>`;
+            }
+        });
+        return html;
+    }
+
+    // Exponer la función de filtrado al contexto del modal
+    window.filtrarPropiedadesCierre = function() {
+        const filtro = document.getElementById('filtroTipoCierre').value;
+        const selectProp = document.getElementById('cierrePropiedad');
+        selectProp.innerHTML = generarOpcionesPropiedades(filtro);
+        autoFillPrecio(); // Actualizar precio si aplica
+    };
 
     const div = document.createElement('div');
     div.id = 'modalCierreCustom';
@@ -780,9 +798,20 @@ async function mostrarModalCierre(idCliente) {
                 <!-- Columna Izquierda: Entradas de datos -->
                 <div class="space-y-3.5">
                     <div>
-                        <label class="text-xs font-bold text-slate-600 mb-1 block">Propiedad vendida</label>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-slate-600">Propiedad vendida</label>
+                            <!-- Mini Selector de Categoría/Filtro -->
+                            <select id="filtroTipoCierre" onchange="filtrarPropiedadesCierre()" class="bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-2 py-0.5 text-[10px] font-bold text-slate-500 hover:text-slate-800 transition-colors focus:outline-none cursor-pointer">
+                                <option value="Todos">Todos los tipos</option>
+                                <option value="Casa">Casas</option>
+                                <option value="Departamento">Departamentos</option>
+                                <option value="Terreno">Terrenos</option>
+                                <option value="Bodega">Bodegas</option>
+                                <option value="Locales">Locales/Oficinas</option>
+                            </select>
+                        </div>
                         <select id="cierrePropiedad" onchange="autoFillPrecio()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer">
-                            ${propiedadesOptions}
+                            ${generarOpcionesPropiedades('Todos')}
                         </select>
                     </div>
                     <div>

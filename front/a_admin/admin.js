@@ -763,9 +763,10 @@ async function mostrarModalCierre(idCliente) {
     div.id = 'modalCierreCustom';
     div.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4';
     div.innerHTML = `
-        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md md:max-w-3xl shadow-2xl border border-slate-100 animate-scale-in">
+            <!-- Encabezado del Modal -->
+            <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
                     <i data-lucide="trophy" class="w-5 h-5 text-emerald-500"></i>
                 </div>
                 <div>
@@ -774,68 +775,79 @@ async function mostrarModalCierre(idCliente) {
                 </div>
             </div>
             
-            <div class="space-y-3 mb-5">
-                <div>
-                    <label class="text-xs font-bold text-slate-600 mb-1 block">Propiedad vendida</label>
-                    <select id="cierrePropiedad" onchange="autoFillPrecio()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer">
-                        ${propiedadesOptions}
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-600 mb-1 block">Precio de venta (MXN) *</label>
-                    <input type="number" id="cierrePrecio" placeholder="Ej. 2500000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" required>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-600 mb-1 block">Porcentaje de comisión total (%) *</label>
-                    <input type="number" id="cierreComision" step="0.1" value="6.0" placeholder="Ej. 6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" min="0" required>
-                </div>
-                <div class="flex items-center gap-2 py-1">
-                    <input type="checkbox" id="cierreCompartido" class="w-4 h-4 text-emerald-500 bg-slate-50 border border-slate-200 rounded focus:ring-emerald-400 cursor-pointer">
-                    <label for="cierreCompartido" class="text-xs font-bold text-slate-600 cursor-pointer">¿Comisión compartida? (Dividir al 50% entre 2)</label>
-                </div>
-                <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner mt-2">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
-                        <i data-lucide="calculator" class="w-3.5 h-3.5 text-emerald-500"></i> Desglose de Comisión Real
-                    </h4>
-                    <div class="space-y-1.5 text-xs text-slate-600">
-                        <div class="flex justify-between">
-                            <span>Comisión Bruta Oficina (<span id="lblPorcentajeTotal">6.0</span>%):</span>
-                            <span id="cierreBrutoPreview" class="font-bold text-slate-700">$0</span>
-                        </div>
-                        <div class="flex justify-between text-rose-600">
-                            <span>Regalías Century 21 México (8%):</span>
-                            <span id="cierreRegaliasPreview" class="font-bold">-$0</span>
-                        </div>
-                        <div class="flex justify-between border-b border-slate-200/60 pb-1 text-slate-700">
-                            <span>Neto Oficina (92%):</span>
-                            <span id="cierreNetoPreview" class="font-semibold">$0</span>
-                        </div>
-                        <div class="flex justify-between text-emerald-600 font-bold text-sm pt-1">
-                            <span>Tu Comisión Real (45%):</span>
-                            <span id="cierreComisionPreview">$0</span>
-                        </div>
-                        <div id="cierreCompartidoWrapper" class="hidden flex justify-between text-indigo-600 font-bold text-sm">
-                            <span>Dividido entre 2 asesores (50%):</span>
-                            <span id="cierreFinalPreview">$0</span>
-                        </div>
+            <!-- Grid de dos columnas en Desktop -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                <!-- Columna Izquierda: Entradas de datos -->
+                <div class="space-y-3.5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1 block">Propiedad vendida</label>
+                        <select id="cierrePropiedad" onchange="autoFillPrecio()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer">
+                            ${propiedadesOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1 block">Precio de venta (MXN) *</label>
+                        <input type="number" id="cierrePrecio" placeholder="Ej. 2500000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1 block">Porcentaje de comisión total (%) *</label>
+                        <input type="number" id="cierreComision" step="0.1" value="6.0" placeholder="Ej. 6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" min="0" required>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1 block">Tipo de operación</label>
+                        <select id="cierreTipoOp" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer">
+                            <option value="Venta">Venta</option>
+                            <option value="Renta">Renta</option>
+                        </select>
                     </div>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-600 mb-1 block">Tipo de operación</label>
-                    <select id="cierreTipoOp" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 cursor-pointer">
-                        <option value="Venta">Venta</option>
-                        <option value="Renta">Renta</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-600 mb-1 block">Notas (opcional)</label>
-                    <textarea id="cierreNotas" rows="2" placeholder="Detalles adicionales..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 resize-none"></textarea>
+
+                <!-- Columna Derecha: Calculadora Century 21 y Notas -->
+                <div class="space-y-3.5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 py-1 mb-1">
+                            <input type="checkbox" id="cierreCompartido" class="w-4 h-4 text-emerald-500 bg-slate-50 border border-slate-200 rounded focus:ring-emerald-400 cursor-pointer">
+                            <label for="cierreCompartido" class="text-xs font-bold text-slate-600 cursor-pointer">¿Comisión compartida? (Dividir al 50%)</label>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner">
+                            <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="calculator" class="w-3.5 h-3.5 text-emerald-500"></i> Desglose de Comisión Real
+                            </h4>
+                            <div class="space-y-1.5 text-xs text-slate-600">
+                                <div class="flex justify-between">
+                                    <span>Comisión Bruta Oficina (<span id="lblPorcentajeTotal">6.0</span>%):</span>
+                                    <span id="cierreBrutoPreview" class="font-bold text-slate-700">$0</span>
+                                </div>
+                                <div class="flex justify-between text-rose-600">
+                                    <span>Regalías Century 21 México (8%):</span>
+                                    <span id="cierreRegaliasPreview" class="font-bold">-$0</span>
+                                </div>
+                                <div class="flex justify-between border-b border-slate-200/60 pb-1 text-slate-700">
+                                    <span>Neto Oficina (92%):</span>
+                                    <span id="cierreNetoPreview" class="font-semibold">$0</span>
+                                </div>
+                                <div class="flex justify-between text-emerald-600 font-bold text-sm pt-1">
+                                    <span>Tu Comisión Real (45%):</span>
+                                    <span id="cierreComisionPreview">$0</span>
+                                </div>
+                                <div id="cierreCompartidoWrapper" class="hidden flex justify-between text-indigo-600 font-bold text-sm pt-1 border-t border-slate-200/40 mt-1">
+                                    <span>Dividido al 50% entre 2:</span>
+                                    <span id="cierreFinalPreview">$0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1 block">Notas (opcional)</label>
+                        <textarea id="cierreNotas" rows="2" placeholder="Detalles adicionales..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-400 resize-none"></textarea>
+                    </div>
                 </div>
             </div>
             
-            <div class="flex gap-3">
-                <button onclick="cancelarCierre()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer">Cancelar</button>
-                <button onclick="confirmarCierre(${idCliente})" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-colors cursor-pointer flex items-center justify-center gap-2">
+            <!-- Botones de Acción (Alineados a la derecha en desktop) -->
+            <div class="flex gap-3 border-t border-slate-100 pt-4 md:justify-end">
+                <button onclick="cancelarCierre()" class="flex-1 md:flex-initial md:px-6 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer">Cancelar</button>
+                <button onclick="confirmarCierre(${idCliente})" class="flex-1 md:flex-initial md:px-8 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-colors cursor-pointer flex items-center justify-center gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4"></i> Registrar Cierre
                 </button>
             </div>

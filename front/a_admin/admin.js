@@ -440,10 +440,10 @@ function aplicarFiltroClientes(nuevoId = null) {
                 c.estado_seguimiento === 'Cerrado' ? 'bg-emerald-50/40 border-l-4 border-emerald-300' :
                 c.estado_seguimiento === 'Descartado' ? 'bg-rose-50/40 border-l-4 border-rose-300' : 'bg-slate-50/80 border-l-0';
             
-            const selectClass = c.estado_seguimiento === 'Nuevo' ? 'border-amber-300 text-amber-800' :
-                c.estado_seguimiento === 'Contactado' ? 'border-sky-300 text-sky-800' :
-                c.estado_seguimiento === 'Cerrado' ? 'border-emerald-300 text-emerald-800' :
-                c.estado_seguimiento === 'Descartado' ? 'border-rose-300 text-rose-800' : 'border-slate-200 text-slate-600';
+            const selectClass = c.estado_seguimiento === 'Nuevo' ? 'bg-amber-50 text-amber-700 border-amber-300/40' :
+                c.estado_seguimiento === 'Contactado' ? 'bg-sky-50 text-sky-700 border-sky-300/40' :
+                c.estado_seguimiento === 'Cerrado' ? 'bg-emerald-50 text-emerald-700 border-emerald-300/40' :
+                c.estado_seguimiento === 'Descartado' ? 'bg-rose-50 text-rose-700 border-rose-300/40' : 'bg-slate-50 text-slate-700 border-slate-300/40';
             
             const esNuevo = nuevoId && (c.id_cliente === nuevoId || c.id_cliente === Number(nuevoId));
             const trClass = `${esNuevo ? 'bg-amber-100/60 shadow-[inset_0_0_15px_rgba(212,175,55,0.3)] transition-all duration-1000' : 'hover:bg-slate-50/80 transition-colors duration-1000'} ${estadoClass}`;
@@ -477,11 +477,11 @@ function aplicarFiltroClientes(nuevoId = null) {
                     <div class="text-slate-400 text-[11px] truncate max-w-[180px]">${c.zona_interes}</div>
                 </td>
                 <td class="p-3 text-center flex justify-center gap-2 items-center">
-                    <select onchange="actualizarEstadoCliente(${c.id_cliente}, this.value)" class="text-[10px] p-1 border rounded text-slate-600 bg-white cursor-pointer ${selectClass}">
-                        <option value="Nuevo" ${c.estado_seguimiento === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
-                        <option value="Contactado" ${c.estado_seguimiento === 'Contactado' ? 'selected' : ''}>Contactado</option>
-                        <option value="Cerrado" ${c.estado_seguimiento === 'Cerrado' ? 'selected' : ''}>Cerrado</option>
-                        <option value="Descartado" ${c.estado_seguimiento === 'Descartado' ? 'selected' : ''}>Descartado</option>
+                    <select onchange="actualizarEstadoCliente(${c.id_cliente}, this.value)" class="text-[10px] px-2.5 py-1 border rounded-full font-bold cursor-pointer transition-all focus:outline-none shadow-sm ${selectClass}">
+                        <option value="Nuevo" class="bg-white text-amber-700 font-bold" ${c.estado_seguimiento === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
+                        <option value="Contactado" class="bg-white text-sky-700 font-bold" ${c.estado_seguimiento === 'Contactado' ? 'selected' : ''}>Contactado</option>
+                        <option value="Cerrado" class="bg-white text-emerald-700 font-bold" ${c.estado_seguimiento === 'Cerrado' ? 'selected' : ''}>Cerrado</option>
+                        <option value="Descartado" class="bg-white text-rose-700 font-bold" ${c.estado_seguimiento === 'Descartado' ? 'selected' : ''}>Descartado</option>
                     </select>
                     ${requiereSeguimiento ? `
                     <button onclick="registrarContactoSeguimiento(${c.id_cliente}, '${c.telefono}', '${c.nombre.replace(/'/g, "\\'")}')" class="bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white font-bold p-1.5 rounded-xl border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-md" title="Enviar Seguimiento (WhatsApp)">
@@ -620,10 +620,11 @@ function seleccionarOpcionProspecto(campo, valor, boton) {
     if (campo === 'presupuesto_max') {
         document.getElementById('manualPresupuestoCustom').value = '';
     }
-    document.querySelectorAll(`#modalAgregarProspecto button[data-prospecto-option="${campo}"]`).forEach(btn => btn.classList.remove('border-[--gold-primary]', 'bg-amber-50'));
+    document.querySelectorAll(`#modalAgregarProspecto button[data-prospecto-option="${campo}"]`).forEach(btn => {
+        btn.classList.remove('selected');
+    });
     if (boton) {
-        boton.dataset.prospectoOption = campo;
-        boton.classList.add('border-[--gold-primary]', 'bg-amber-50');
+        boton.classList.add('selected');
     }
 }
 
@@ -631,7 +632,7 @@ function actualizarPresupuestoManual(valor) {
     const precio = parseFloat(valor);
     if (!Number.isNaN(precio) && precio > 0) {
         window.prospectoManual.presupuesto_max = precio;
-        document.querySelectorAll(`#modalAgregarProspecto button[data-prospecto-option="presupuesto_max"]`).forEach(btn => btn.classList.remove('border-[--gold-primary]', 'bg-amber-50'));
+        document.querySelectorAll(`#modalAgregarProspecto button[data-prospecto-option="presupuesto_max"]`).forEach(btn => btn.classList.remove('selected'));
     }
 }
 
@@ -639,14 +640,14 @@ function toggleZonaProspectoManual(zona, boton) {
     const index = window.prospectoManual.zonas_seleccionadas.indexOf(zona);
     if (index > -1) {
         window.prospectoManual.zonas_seleccionadas.splice(index, 1);
-        boton.classList.remove('border-[--gold-primary]', 'bg-amber-50');
+        boton.classList.remove('selected');
         if (zona === 'Otro') {
             document.getElementById('manualZonaPersonalizadaWrapper').classList.add('hidden');
             document.getElementById('manualZonaPersonalizada').value = '';
         }
     } else {
         window.prospectoManual.zonas_seleccionadas.push(zona);
-        boton.classList.add('border-[--gold-primary]', 'bg-amber-50');
+        boton.classList.add('selected');
         if (zona === 'Otro') {
             document.getElementById('manualZonaPersonalizadaWrapper').classList.remove('hidden');
         }
@@ -786,9 +787,9 @@ async function mostrarModalCierre(idCliente) {
                     <p class="text-[10px] text-slate-400 mt-1">Comisión estimada (3.5%): <span id="cierreComisionPreview" class="font-bold text-emerald-600">$0</span></p>
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-600 mb-1 block">Comisión asignada (MXN)</label>
-                    <input type="number" id="cierreComision" placeholder="Ej. 87500" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" min="0">
-                    <p class="text-[10px] text-slate-400 mt-1">Si no etiquetas un monto, se usará 3.5% del precio.</p>
+                    <label class="text-xs font-bold text-slate-600 mb-1 block">Comisión asignada (%)</label>
+                    <input type="number" id="cierreComision" step="0.1" placeholder="Ej. 3.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-emerald-400" min="0">
+                    <p class="text-[10px] text-slate-400 mt-1">Si no etiquetas un porcentaje, se usará 3.5% del precio.</p>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-600 mb-1 block">Tipo de operación</label>
@@ -821,9 +822,10 @@ async function mostrarModalCierre(idCliente) {
 
     function updateCierreComisionPreview() {
         const precio = parseFloat(cierrePrecioInput.value) || 0;
-        const comisionManual = parseFloat(cierreComisionInput.value);
-        if (!Number.isNaN(comisionManual) && comisionManual >= 0) {
-            cierreComisionPreview.textContent = '$' + comisionManual.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        const porcentaje = parseFloat(cierreComisionInput.value);
+        if (!Number.isNaN(porcentaje) && porcentaje >= 0) {
+            const monto = precio * (porcentaje / 100);
+            cierreComisionPreview.textContent = '$' + monto.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
             return;
         }
         cierreComisionPreview.textContent = '$' + (precio * 0.035).toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
@@ -859,7 +861,7 @@ async function confirmarCierre(idCliente) {
     const tipoOp = document.getElementById('cierreTipoOp').value;
     const notas = document.getElementById('cierreNotas').value.trim() || null;
     const comisionInput = parseFloat(document.getElementById('cierreComision').value);
-    const comision = (!Number.isNaN(comisionInput) && comisionInput >= 0) ? comisionInput : null;
+    const comisionPorcentaje = (!Number.isNaN(comisionInput) && comisionInput >= 0) ? comisionInput : null;
 
     document.getElementById('modalCierreCustom')?.remove();
 
@@ -867,7 +869,7 @@ async function confirmarCierre(idCliente) {
         const res = await fetch(`${window.API_BASE_URL}/admin/ventas/registrar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_cliente: idCliente, id_propiedad: idPropiedad, precio_venta: precio, tipo_operacion: tipoOp, notas, comision })
+            body: JSON.stringify({ id_cliente: idCliente, id_propiedad: idPropiedad, precio_venta: precio, tipo_operacion: tipoOp, notas, comision_porcentaje: comisionPorcentaje })
         });
         const data = await res.json();
         if (data.status === 'success') {

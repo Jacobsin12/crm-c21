@@ -519,15 +519,21 @@ app.get('/api/admin/estadisticas', (req, res) => {
 // RUTA: REGISTRAR UNA VENTA CERRADA
 // ==========================================
 app.post('/api/admin/ventas/registrar', (req, res) => {
-    const { id_cliente, id_propiedad, precio_venta, tipo_operacion, notas, comision } = req.body;
+    const { id_cliente, id_propiedad, precio_venta, tipo_operacion, notas, comision_porcentaje, comision } = req.body;
     
     if (!id_cliente || !precio_venta) {
         return res.status(400).json({ status: 'error', message: 'Faltan datos obligatorios (cliente y precio).' });
     }
 
     const parsedPrecio = parseFloat(precio_venta);
-    const parsedComision = parseFloat(comision);
-    const comisionFinal = (!Number.isNaN(parsedComision) && parsedComision >= 0) ? parsedComision : parseFloat((parsedPrecio * 0.035).toFixed(2));
+    const parsedComisionPct = parseFloat(comision_porcentaje);
+    let comisionFinal;
+    if (!Number.isNaN(parsedComisionPct) && parsedComisionPct >= 0) {
+        comisionFinal = parseFloat((parsedPrecio * parsedComisionPct / 100).toFixed(2));
+    } else {
+        const parsedComision = parseFloat(comision);
+        comisionFinal = (!Number.isNaN(parsedComision) && parsedComision >= 0) ? parsedComision : parseFloat((parsedPrecio * 0.035).toFixed(2));
+    }
 
     const qInsert = `INSERT INTO ventas_cerradas (id_cliente, id_propiedad, precio_venta, comision, tipo_operacion, notas, registrado_por)
                      VALUES (?, ?, ?, ?, ?, ?, ?)`;

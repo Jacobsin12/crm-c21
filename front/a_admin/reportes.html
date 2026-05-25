@@ -255,13 +255,13 @@
                 if (Number.isNaN(tuComision) || tuComision === null) {
                     const notasLower = (v.notes || v.notas || '').toLowerCase();
                     esCompartido = notasLower.includes('compartida') || notasLower.includes('compartido') || notasLower.includes('mitad');
-                    const brutoEst = precio * 0.06;
+                    const brutoEst = v.tipo_operacion === 'Renta' ? precio : precio * 0.06;
                     const netoEst = brutoEst * 0.92;
                     const agenteEst = netoEst * 0.45;
                     tuComision = esCompartido ? (agenteEst / 2) : agenteEst;
                 } else {
                     // Detectar si fue compartido comparando con el valor teórico completo
-                    const brutoEst = precio * 0.06;
+                    const brutoEst = v.tipo_operacion === 'Renta' ? precio : precio * 0.06;
                     const netoEst = brutoEst * 0.92;
                     const agenteEst = netoEst * 0.45;
                     // Si el valor guardado es menor o igual al 60% de la comisión teórica completa, asumimos compartida
@@ -270,8 +270,14 @@
                     }
                 }
 
-                // Desglosar basado en el estándar del 6% de comisión total
-                const bruto = precio * 0.06;
+                // Ingeniería inversa para obtener el bruto real (soportando porcentajes personalizados o 100% en rentas)
+                let bruto = 0;
+                if (tuComision > 0) {
+                    const divisor = esCompartido ? (0.92 * 0.45 / 2) : (0.92 * 0.45);
+                    bruto = tuComision / divisor;
+                } else {
+                    bruto = v.tipo_operacion === 'Renta' ? precio : (precio * 0.06);
+                }
                 const regalias = bruto * 0.08;
                 const neto = bruto * 0.92;
 

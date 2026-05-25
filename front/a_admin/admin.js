@@ -917,9 +917,11 @@ async function mostrarModalCierre(idCliente) {
     const cierreCompartidoWrapper = document.getElementById('cierreCompartidoWrapper');
     const cierreFinalPreview = document.getElementById('cierreFinalPreview');
 
+    const cierreTipoOp = document.getElementById('cierreTipoOp');
+
     function updateCierreComisionPreview() {
         const precio = parseFloat(cierrePrecioInput.value) || 0;
-        const porcentaje = parseFloat(cierreComisionInput.value) || 6.0;
+        const porcentaje = parseFloat(cierreComisionInput.value) || 0;
         const isCompartida = cierreCompartidoCheckbox.checked;
 
         lblPorcentajeTotal.textContent = porcentaje.toFixed(1);
@@ -942,6 +944,21 @@ async function mostrarModalCierre(idCliente) {
             cierreCompartidoWrapper.classList.add('hidden');
         }
     }
+
+    cierreTipoOp.addEventListener('change', (e) => {
+        if (e.target.value === 'Renta') {
+            cierreComisionInput.value = '100';
+            cierreComisionInput.readOnly = true;
+            cierreComisionInput.classList.add('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
+            cierreComisionInput.classList.remove('bg-slate-50', 'text-slate-700');
+        } else {
+            cierreComisionInput.value = '6.0';
+            cierreComisionInput.readOnly = false;
+            cierreComisionInput.classList.remove('bg-slate-200', 'text-slate-500', 'cursor-not-allowed');
+            cierreComisionInput.classList.add('bg-slate-50', 'text-slate-700');
+        }
+        updateCierreComisionPreview();
+    });
 
     cierrePrecioInput.addEventListener('input', updateCierreComisionPreview);
     cierreComisionInput.addEventListener('input', updateCierreComisionPreview);

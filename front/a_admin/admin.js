@@ -429,7 +429,13 @@ function aplicarFiltroClientes(nuevoId = null) {
     if (!tabla) return;
 
     const filtro = document.getElementById("filtroEstadoCliente")?.value || "Todos";
-    const filtrados = window.clientesGlobal.filter(c => filtro === "Todos" || c.estado_seguimiento === filtro);
+    const busquedaNombre = document.getElementById("filtroNombreCliente")?.value.toLowerCase().trim() || "";
+
+    const filtrados = window.clientesGlobal.filter(c => {
+        const coincideEstado = filtro === "Todos" || c.estado_seguimiento === filtro;
+        const coincideNombre = busquedaNombre === "" || c.nombre.toLowerCase().includes(busquedaNombre) || c.telefono.includes(busquedaNombre);
+        return coincideEstado && coincideNombre;
+    });
 
     if (filtrados.length > 0) {
         tabla.innerHTML = filtrados.map(c => {

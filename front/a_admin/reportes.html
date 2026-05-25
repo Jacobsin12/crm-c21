@@ -56,7 +56,7 @@
                 <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 p-4 rounded-2xl text-center">
                     <i data-lucide="home" class="w-5 h-5 text-emerald-500 mx-auto mb-1"></i>
                     <p class="text-2xl font-black text-emerald-700" id="kpiVentas">0</p>
-                    <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Casas Vendidas</p>
+                    <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Operaciones Cerradas</p>
                 </div>
                 <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 p-4 rounded-2xl text-center">
                     <i data-lucide="banknote" class="w-5 h-5 text-amber-500 mx-auto mb-1"></i>
@@ -88,7 +88,7 @@
             <!-- Gráficas de Ventas -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Casas Vendidas por Mes</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">Operaciones por Mes</h3>
                     <canvas id="chartVentasMes"></canvas>
                 </div>
                 <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
@@ -145,7 +145,7 @@
             <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
                 <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
                     <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-                    Ventas Cerradas — Detalle de Cierre
+                    Ventas y Rentas Cerradas — Detalle de Cierre
                 </h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
@@ -153,7 +153,7 @@
                             <tr class="text-left text-[10px] font-bold uppercase text-slate-400 border-b border-slate-200">
                                 <th class="p-2.5">Cliente / Propiedad</th>
                                 <th class="p-2.5">Fecha cierre</th>
-                                <th class="p-2.5">Precio de Venta</th>
+                                <th class="p-2.5">Precio de Cierre</th>
                                 <th class="p-2.5 text-indigo-600">Comisión Bruta (6%)</th>
                                 <th class="p-2.5 text-rose-500">Regalías C21 (8%)</th>
                                 <th class="p-2.5 text-amber-600">Neto Oficina (92%)</th>
@@ -280,6 +280,7 @@
                     <td class="p-2.5">
                         <div class="font-bold text-slate-800 text-xs">${v.nombre || '—'}</div>
                         <div class="text-[10px] text-slate-400 font-medium">${v.propiedad_titulo || 'Sin propiedad'}</div>
+                        <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase inline-block mt-1">${v.tipo_operacion || 'Venta'}</span>
                     </td>
                     <td class="p-2.5 text-slate-400 text-[10px] font-semibold">
                         ${v.fecha_cierre ? new Date(v.fecha_cierre).toLocaleDateString('es-MX', {day: 'numeric', month: 'short', year: 'numeric'}) : '—'}
@@ -346,7 +347,7 @@
                     data: {
                         labels: mesesLabels.length > 0 ? mesesLabels : ['Sin datos'],
                         datasets: [{
-                            label: 'Ventas',
+                            label: 'Operaciones',
                             data: mesesLabels.length > 0 ? mesesKeys.map(m => mesesMap[m].cantidad) : [0],
                             backgroundColor: '#059669',
                             borderRadius: 8,
@@ -636,7 +637,7 @@
                 doc.setTextColor(203, 163, 101);
                 doc.setFontSize(11);
                 doc.setFont("helvetica", "bold");
-                doc.text("VENTAS CERRADAS — CASA VENDIDA Y COMISIÓN", m, 13);
+                doc.text("OPERACIONES CERRADAS — DETALLES Y COMISIÓN", m, 13);
                 doc.setTextColor(255,255,255);
                 doc.setFontSize(8);
                 doc.text(fecha, pw - m, 13, { align: 'right' });

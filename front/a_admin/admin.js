@@ -477,12 +477,23 @@ function aplicarFiltroClientes(nuevoId = null) {
                     <div class="text-slate-400 text-[11px] truncate max-w-[180px]">${c.zona_interes}</div>
                 </td>
                 <td class="p-3 text-center flex justify-center gap-2 items-center">
-                    <select onchange="actualizarEstadoCliente(${c.id_cliente}, this.value)" class="text-[10px] px-2.5 py-1 border rounded-full font-bold cursor-pointer transition-all focus:outline-none shadow-sm ${selectClass}">
-                        <option value="Nuevo" class="bg-white text-amber-700 font-bold" ${c.estado_seguimiento === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
-                        <option value="Contactado" class="bg-white text-sky-700 font-bold" ${c.estado_seguimiento === 'Contactado' ? 'selected' : ''}>Contactado</option>
-                        <option value="Cerrado" class="bg-white text-emerald-700 font-bold" ${c.estado_seguimiento === 'Cerrado' ? 'selected' : ''}>Cerrado</option>
-                        <option value="Descartado" class="bg-white text-rose-700 font-bold" ${c.estado_seguimiento === 'Descartado' ? 'selected' : ''}>Descartado</option>
-                    </select>
+                    ${c.estado_seguimiento === 'Cerrado' ? `
+                        <div class="text-[10px] px-2.5 py-1.5 border rounded-full font-bold shadow-sm bg-emerald-50 text-emerald-700 border-emerald-300/40 select-none flex items-center justify-center gap-1 cursor-not-allowed" title="Un caso cerrado no puede modificarse">
+                            <i data-lucide="lock" class="w-3 h-3"></i> Cerrado
+                        </div>
+                    ` : c.estado_seguimiento === 'Descartado' ? `
+                        <select onchange="actualizarEstadoCliente(${c.id_cliente}, this.value)" class="text-[10px] px-2.5 py-1 border rounded-full font-bold cursor-pointer transition-all focus:outline-none shadow-sm ${selectClass}">
+                            <option value="Descartado" class="bg-white text-rose-700 font-bold" selected>Descartado</option>
+                            <option value="Contactado" class="bg-white text-sky-700 font-bold">Reabrir caso</option>
+                        </select>
+                    ` : `
+                        <select onchange="actualizarEstadoCliente(${c.id_cliente}, this.value)" class="text-[10px] px-2.5 py-1 border rounded-full font-bold cursor-pointer transition-all focus:outline-none shadow-sm ${selectClass}">
+                            <option value="Nuevo" class="bg-white text-amber-700 font-bold" ${c.estado_seguimiento === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
+                            <option value="Contactado" class="bg-white text-sky-700 font-bold" ${c.estado_seguimiento === 'Contactado' ? 'selected' : ''}>Contactado</option>
+                            <option value="Cerrado" class="bg-white text-emerald-700 font-bold">Cerrado</option>
+                            <option value="Descartado" class="bg-white text-rose-700 font-bold">Descartado</option>
+                        </select>
+                    `}
                     ${requiereSeguimiento ? `
                     <button onclick="registrarContactoSeguimiento(${c.id_cliente}, '${c.telefono}', '${c.nombre.replace(/'/g, "\\'")}')" class="bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white font-bold p-1.5 rounded-xl border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-md" title="Enviar Seguimiento (WhatsApp)">
                         <i data-lucide="bell-ring" class="w-4 h-4"></i>

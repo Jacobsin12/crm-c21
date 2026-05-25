@@ -22,8 +22,16 @@
         
         <div class="luxury-card">
             
-            <div id="wrapperProgress" class="w-full bg-slate-100 h-1 rounded-full mb-6 hidden">
-                <div id="progressBar" class="bg-[--gold-primary] h-1 rounded-full transition-all duration-500" style="width: 0%"></div>
+            <div id="wrapperProgress" class="mb-6 hidden animate-fade-in">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest" id="progressText">Paso 1</span>
+                    <span class="text-[10px] font-bold text-[var(--gold-dark)]" id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-[var(--gold-primary)] to-[var(--gold-dark)] h-full rounded-full transition-all duration-700 ease-out relative" style="width: 0%">
+                        <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                </div>
             </div>
 
             <form id="perfilamientoForm" class="space-y-6">

@@ -99,22 +99,7 @@
             titulo: "¿Cuál es tu presupuesto estimado?",
             descripcion: "Selecciona el rango de precio que se adecúe a tus planes.",
             icono: "wallet",
-            html: `
-                <div class="grid grid-cols-1 gap-2.5 pt-2">
-                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 2000000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
-                        <span>De $1,000,000 a $2,000,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                    </button>
-                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 3000000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
-                        <span>De $2,000,000 a $3,000,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                    </button>
-                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 4000000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
-                        <span>De $3,000,000 a $4,000,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                    </button>
-                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 6000000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
-                        <span>Más de $4,000,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                    </button>
-                </div>
-            `
+            html: `<!-- Renderizado dinámico en renderizarPaso() -->`
         },
         {
             id: "zona_interes_paso",
@@ -125,7 +110,7 @@
                 <div class="space-y-4 pt-2">
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" onclick="conmutarZonaSeleccionada('Juriquilla', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Juriquilla</button>
-                        <button type="button" onclick="conmutarZonaSeleccionada('Sakiá', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Sakiá</button>
+                        <button type="button" onclick="conmutarZonaSeleccionada('Zakiá', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Zakiá</button>
                         <button type="button" onclick="conmutarZonaSeleccionada('Campanario', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Campanario</button>
                         <button type="button" onclick="conmutarZonaSeleccionada('Zibatá', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Zibatá</button>
                         <button type="button" onclick="conmutarZonaSeleccionada('Centro', this)" class="zona-btn luxury-option-btn py-2.5 rounded-xl text-center cursor-pointer text-xs font-medium">Centro</button>
@@ -220,8 +205,62 @@
         document.getElementById("wrapperButtons").classList.remove("hidden");
 
         // Calcular progreso excluyendo la pantalla de presentación
-        const porcentajeProgreso = (pasoActual / (pasosCuestionario.length - 1)) * 100;
+        const totalPasosReales = pasosCuestionario.length - 1;
+        const porcentajeProgreso = Math.round((pasoActual / totalPasosReales) * 100);
         document.getElementById("progressBar").style.width = `${porcentajeProgreso}%`;
+        
+        const progressTextEl = document.getElementById("progressText");
+        const progressPercentEl = document.getElementById("progressPercent");
+        if(progressTextEl) progressTextEl.innerText = `Paso ${pasoActual} de ${totalPasosReales}`;
+        if(progressPercentEl) progressPercentEl.innerText = `${porcentajeProgreso}%`;
+
+        let pasoHtml = paso.html;
+        
+        // Renderizar dinámicamente opciones de presupuesto según si es Venta o Renta
+        if (paso.id === "presupuesto_rangos") {
+            const esRenta = datosRespuestas.tipo_operacion === 'Renta';
+            if (esRenta) {
+                pasoHtml = `
+                <div class="grid grid-cols-1 gap-2.5 pt-2">
+                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 15000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>De $10,500 a $15,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 20000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>De $15,000 a $20,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 30000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>De $20,000 a $30,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <button type="button" onclick="document.getElementById('wrapperOtroPresupuesto').classList.toggle('hidden')" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>Otro presupuesto...</span> <i data-lucide="edit-2" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <div id="wrapperOtroPresupuesto" class="hidden animate-fade-in mt-2 flex gap-2">
+                        <input type="number" id="presupuesto_personalizado" placeholder="Monto ej. 35000" class="luxury-input w-full px-4 py-3">
+                        <button type="button" onclick="const v = document.getElementById('presupuesto_personalizado').value; if(v) seleccionarOpcionQuick('presupuesto_max', v)" class="luxury-btn px-4 py-3 rounded-xl flex items-center"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+                    </div>
+                </div>`;
+            } else {
+                pasoHtml = `
+                <div class="grid grid-cols-1 gap-2.5 pt-2">
+                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 2000000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>De $1,000,000 a $2,000,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 3000000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>De $2,000,000 a $3,000,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <button type="button" onclick="seleccionarOpcionQuick('presupuesto_max', 4000000)" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>De $3,000,000 a $4,000,000 MXN</span> <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <button type="button" onclick="document.getElementById('wrapperOtroPresupuesto').classList.toggle('hidden')" class="luxury-option-btn py-3 px-4 rounded-xl text-left text-sm font-medium flex justify-between items-center cursor-pointer">
+                        <span>Otro presupuesto...</span> <i data-lucide="edit-2" class="w-4 h-4 text-slate-400"></i>
+                    </button>
+                    <div id="wrapperOtroPresupuesto" class="hidden animate-fade-in mt-2 flex gap-2">
+                        <input type="number" id="presupuesto_personalizado" placeholder="Monto ej. 5000000" class="luxury-input w-full px-4 py-3">
+                        <button type="button" onclick="const v = document.getElementById('presupuesto_personalizado').value; if(v) seleccionarOpcionQuick('presupuesto_max', v)" class="luxury-btn px-4 py-3 rounded-xl flex items-center"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+                    </div>
+                </div>`;
+            }
+        }
 
         contenedor.innerHTML = `
             <div class="space-y-4">
@@ -233,7 +272,7 @@
                 </div>
                 <p class="text-slate-600 text-sm">${paso.descripcion}</p>
                 <div class="pt-2">
-                    ${paso.html}
+                    ${pasoHtml}
                 </div>
             </div>
         `;

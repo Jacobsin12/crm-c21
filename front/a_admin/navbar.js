@@ -128,6 +128,9 @@ function renderLuxuryNavbar(activePage) {
     if (typeof actualizarBotonPush === 'function') {
         actualizarBotonPush();
     }
+
+    // Mostrar mensaje diario a Mami
+    setTimeout(mostrarMensajeMami, 1500); // 1.5s delay so it feels natural after loading
 }
 
 function actualizarBotonPush() {
@@ -181,4 +184,47 @@ function cerrarSesion() {
     localStorage.removeItem('adminToken');
     document.cookie = 'adminToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Secure; SameSite=Strict';
     window.location.href = 'login.html';
+}
+
+function mostrarMensajeMami() {
+    const ultimoMensaje = localStorage.getItem('ultima_vez_mami');
+    const ahora = new Date().getTime();
+    
+    // 24 horas = 86400000 ms
+    if (!ultimoMensaje || (ahora - parseInt(ultimoMensaje)) > 86400000) {
+        const mensajes = [
+            "¡Te amo mami! ❤️",
+            "¡Ten un bonito día mami! ☀️",
+            "¡Vende mucho mami, eres la mejor! 🏡",
+            "¡Eres la mejor asesora del mundo mami! 🥇",
+            "¡Que tengas mucho éxito hoy mami! 🌟",
+            "¡Echale muchas ganas mami, te quiero! 💕",
+            "¡Un abrazo fuerte mami, tú puedes con todo! 🤗"
+        ];
+        const mensajeAleatorio = mensajes[Math.floor(Math.random() * mensajes.length)];
+        
+        const div = document.createElement('div');
+        div.id = 'modalMami';
+        div.className = 'fixed inset-0 bg-pink-500/20 backdrop-blur-md z-[9999] flex items-center justify-center animate-fade-in p-4';
+        div.innerHTML = `
+            <div class="bg-white rounded-[2rem] shadow-2xl max-w-sm w-full p-8 border-4 border-pink-100 text-center relative overflow-hidden transition-all transform scale-100 duration-500">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-pink-100 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-rose-100 rounded-full blur-2xl"></div>
+                <div class="relative z-10">
+                    <div class="w-24 h-24 mx-auto bg-gradient-to-tr from-pink-400 to-rose-300 rounded-full flex items-center justify-center mb-6 shadow-[0_10px_25px_rgba(244,114,182,0.4)]">
+                        <i data-lucide="heart" class="w-12 h-12 text-white fill-white animate-pulse"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-800 mb-2">¡Hola!</h2>
+                    <p class="text-lg font-bold text-pink-600 mb-8 leading-snug">"${mensajeAleatorio}"</p>
+                    <button onclick="document.getElementById('modalMami').remove()" class="w-full bg-gradient-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white font-bold text-lg py-4 rounded-2xl shadow-lg transition-all active:scale-95 cursor-pointer">
+                        ¡Gracias hijo! 🥰
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(div);
+        if (window.lucide) lucide.createIcons();
+        
+        localStorage.setItem('ultima_vez_mami', ahora.toString());
+    }
 }

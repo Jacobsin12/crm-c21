@@ -565,9 +565,14 @@ app.post('/api/admin/ventas/registrar', (req, res) => {
         comisionFinal = (!Number.isNaN(parsedComision) && parsedComision >= 0) ? parsedComision : parseFloat((parsedPrecio * 0.06 * 0.92 * 0.45).toFixed(2));
     }
 
+    let notasFinal = notas || '';
+    if (isCompartida && !notasFinal.toLowerCase().includes('compartid')) {
+        notasFinal += (notasFinal ? ' ' : '') + '[COMPARTIDA]';
+    }
+
     const qInsert = `INSERT INTO ventas_cerradas (id_cliente, id_propiedad, precio_venta, comision, tipo_operacion, notas, registrado_por)
                      VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    const params = [id_cliente, id_propiedad || null, parsedPrecio, comisionFinal, tipo_operacion || 'Venta', notas || null, req.usuario.id];
+    const params = [id_cliente, id_propiedad || null, parsedPrecio, comisionFinal, tipo_operacion || 'Venta', notasFinal, req.usuario.id];
 
     db.query(qInsert, params, (err) => {
         if (err) return res.status(500).json({ status: 'error', message: 'Error al registrar la venta: ' + err.message });

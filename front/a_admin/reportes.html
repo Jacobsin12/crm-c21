@@ -260,14 +260,8 @@
                     const agenteEst = netoEst * 0.45;
                     tuComision = esCompartido ? (agenteEst / 2) : agenteEst;
                 } else {
-                    // Detectar si fue compartido comparando con el valor teórico completo
-                    const brutoEst = v.tipo_operacion === 'Renta' ? precio : precio * 0.06;
-                    const netoEst = brutoEst * 0.92;
-                    const agenteEst = netoEst * 0.45;
-                    // Si el valor guardado es menor o igual al 60% de la comisión teórica completa, asumimos compartida
-                    if (tuComision <= (agenteEst * 0.6)) {
-                        esCompartido = true;
-                    }
+                    const notasLower = (v.notes || v.notas || '').toLowerCase();
+                    esCompartido = notasLower.includes('compartida') || notasLower.includes('compartido') || notasLower.includes('mitad');
                 }
 
                 // Ingeniería inversa para obtener el bruto real (soportando porcentajes personalizados o 100% en rentas)

@@ -1491,6 +1491,11 @@ function aplicarFiltrosInventario(nuevosIds = []) {
         return cumpleTipo && cumpleZona && cumplePrecio && cumpleEstatus;
     });
 
+    const totalLabel = document.getElementById("totalInventario");
+    if (totalLabel) {
+        totalLabel.innerText = propiedadesFiltradas.length;
+    }
+
     if (nuevosIds && nuevosIds.length > 0) {
         propiedadesFiltradas.sort((a, b) => {
             const aNew = nuevosIds.includes(a.id_propiedad) ? 1 : 0;

@@ -506,11 +506,6 @@ function aplicarFiltroClientes(nuevoId = null) {
                         </select>
                     `}
                     ${requiereSeguimiento ? `
-                        <button onclick="actualizarEstadoCliente(${c.id_cliente}, 'Contactado')" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-colors shadow-sm" title="Marcar como Contactado">
-                            <i data-lucide="check" class="w-3 h-3"></i>
-                        </button>
-                    ` : ''}
-                    ${requiereSeguimiento ? `
                     <button onclick="registrarContactoSeguimiento(${c.id_cliente}, '${c.telefono}', '${c.nombre.replace(/'/g, "\\'")}')" class="bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white font-bold p-1.5 rounded-xl border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-md" title="Enviar Seguimiento (WhatsApp)">
                         <i data-lucide="bell-ring" class="w-4 h-4"></i>
                     </button>` : ''}

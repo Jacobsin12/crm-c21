@@ -437,6 +437,13 @@ function aplicarFiltroClientes(nuevoId = null) {
         return coincideEstado && coincideNombre;
     });
 
+    const orden = document.getElementById("filtroOrdenClientes")?.value || "recientes";
+    filtrados.sort((a, b) => {
+        const idA = a.id_cliente || 0;
+        const idB = b.id_cliente || 0;
+        return orden === "recientes" ? idB - idA : idA - idB;
+    });
+
     if (filtrados.length > 0) {
         tabla.innerHTML = filtrados.map(c => {
             const requiereSeguimiento = c.estado_seguimiento !== 'Cerrado' && (!c.fecha_ultimo_contacto || (new Date() - new Date(c.fecha_ultimo_contacto)) / (1000 * 60 * 60 * 24) > 3);

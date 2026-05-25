@@ -33,6 +33,10 @@
                         <option value="Cerrado">Cerrados</option>
                         <option value="Descartado">Descartados / Perdidos</option>
                     </select>
+                    <select id="filtroOrdenClientes" onchange="aplicarFiltroClientes()" class="bg-slate-50 border border-slate-200 text-slate-600 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-[--gold-primary] w-full md:w-auto md:min-w-[140px]">
+                        <option value="recientes">Más recientes</option>
+                        <option value="antiguos">Más antiguos</option>
+                    </select>
                     <button onclick="abrirModalAgregarProspecto()" class="bg-[--gold-primary] text-black text-xs font-bold px-4 py-2 rounded-xl hover:bg-amber-500 transition-colors whitespace-nowrap">
                         + Agregar prospecto
                     </button>

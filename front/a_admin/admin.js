@@ -1001,10 +1001,14 @@ async function confirmarCierre(idCliente) {
     const comisionAgente = netoOficina * 0.45;
     const comisionFinal = comisionCompartida ? (comisionAgente / 2) : comisionAgente;
 
-    document.getElementById('modalCierreCustom')?.remove();
+    mostrarConfirmacionSegura(
+        "¿Confirmar Cierre de Operación?",
+        "Estás a punto de registrar definitivamente esta operación como cerrada. Asegúrate de que los datos sean correctos.",
+        async () => {
+            document.getElementById('modalCierreCustom')?.remove();
 
-    try {
-        const res = await fetch(`${window.API_BASE_URL}/admin/ventas/registrar`, {
+            try {
+                const res = await fetch(`${window.API_BASE_URL}/admin/ventas/registrar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -1028,6 +1032,8 @@ async function confirmarCierre(idCliente) {
             mostrarNotificacion(data.message || 'Error al registrar venta.', 'error');
         }
     } catch { mostrarNotificacion("Error de conexión al registrar la venta.", 'error'); }
+        }
+    );
 }
 
 function mostrarModalDescarte(id) {
@@ -1097,11 +1103,15 @@ async function confirmarDescarte(id) {
         return;
     }
     
-    const targetModal = document.getElementById('modalDescarteCustom');
-    if (targetModal) targetModal.remove();
-    
-    try {
-        await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/estado`, {
+    mostrarConfirmacionSegura(
+        "¿Confirmar Descarte?",
+        "Estás a punto de descartar este prospecto. Siempre podrás reabrir el caso más adelante si el cliente muestra interés de nuevo.",
+        async () => {
+            const targetModal = document.getElementById('modalDescarteCustom');
+            if (targetModal) targetModal.remove();
+            
+            try {
+                await fetch(`${window.API_BASE_URL}/admin/clientes/${id}/estado`, {
             method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: 'Descartado', motivo: motivoSeleccionado })
         });
         const c = window.clientesGlobal.find(x => x.id_cliente === id);
@@ -1112,6 +1122,37 @@ async function confirmarDescarte(id) {
         aplicarFiltroClientes();
         mostrarNotificacion(`Cliente descartado exitosamente.`, 'success');
     } catch { mostrarNotificacion("Error al actualizar estado.", 'error'); }
+        }
+    );
+}
+
+function mostrarConfirmacionSegura(titulo, mensaje, onConfirm) {
+    const existing = document.getElementById('modalConfirmacionSegura');
+    if (existing) existing.remove();
+    
+    const div = document.createElement('div');
+    div.id = 'modalConfirmacionSegura';
+    div.className = 'fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in';
+    div.innerHTML = `
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-slate-100 animate-scale-in text-center">
+            <div class="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-8 h-8 text-amber-500"></i>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 mb-2">${titulo}</h3>
+            <p class="text-sm text-slate-600 mb-6">${mensaje}</p>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('modalConfirmacionSegura').remove()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer">Cancelar</button>
+                <button id="btnConfirmarSeguro" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl text-sm shadow-md transition-colors cursor-pointer">Sí, continuar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(div);
+    if (window.lucide) lucide.createIcons();
+
+    document.getElementById('btnConfirmarSeguro').addEventListener('click', () => {
+        document.getElementById('modalConfirmacionSegura').remove();
+        onConfirm();
+    });
 }
 
 async function ejecutarMatchmaking(idCliente) {

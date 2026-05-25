@@ -804,6 +804,14 @@ async function mostrarModalCierre(idCliente) {
                 </div>
             </div>
             
+            <!-- Advertencia -->
+            <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 mb-5 flex items-start gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+                <div>
+                    <p class="text-xs font-bold text-rose-700">¡Atención! Acción irreversible</p>
+                    <p class="text-[10px] text-rose-600 leading-snug">Una vez que la operación se marque como <b>Cerrada</b>, no podrás reabrirla ni cambiar su estado manualmente. En caso de requerir editar una operación ya cerrada, deberás contactar a soporte técnico.</p>
+                </div>
+            </div>
             <!-- Grid de dos columnas en Desktop -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <!-- Columna Izquierda: Entradas de datos -->

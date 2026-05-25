@@ -1377,6 +1377,7 @@ function aplicarFiltrosInventario(nuevosIds = []) {
     const filtroTipo = document.getElementById("filtroTipo")?.value || "";
     const filtroZona = document.getElementById("filtroZona")?.value.toLowerCase() || "";
     const filtroPrecio = parseFloat(document.getElementById("filtroPrecio")?.value) || Infinity;
+    const filtroEstatus = document.getElementById("filtroEstatus")?.value || "";
 
     const propiedadesFiltradas = window.inventarioGlobal.filter(p => {
         let cumpleTipo = true;
@@ -1392,7 +1393,9 @@ function aplicarFiltrosInventario(nuevosIds = []) {
         
         const cumpleZona = filtroZona === "" || (p.zona && p.zona.toLowerCase().includes(filtroZona)) || (p.titulo && p.titulo.toLowerCase().includes(filtroZona));
         const cumplePrecio = p.precio <= filtroPrecio;
-        return cumpleTipo && cumpleZona && cumplePrecio;
+        const cumpleEstatus = filtroEstatus === "" || p.estatus_propiedad === filtroEstatus;
+
+        return cumpleTipo && cumpleZona && cumplePrecio && cumpleEstatus;
     });
 
     if (nuevosIds && nuevosIds.length > 0) {

@@ -793,6 +793,14 @@ app.get('/api/admin/calendario', async (req, res) => {
         res.json({ status: 'success', data: response.data.items });
     } catch (error) {
         console.error('Error fetching calendar:', error);
+        
+        if (error.code === 400 || error.code === 401 || (error.response && error.response.data && error.response.data.error === 'invalid_grant')) {
+            try {
+                if (fs.existsSync(TOKEN_PATH)) fs.unlinkSync(TOKEN_PATH);
+            } catch (e) {}
+            return res.json({ status: 'unauthorized', message: 'Tu sesión de Google Calendar expiró o fue revocada. Por favor, vuelve a iniciar sesión.' });
+        }
+
         res.status(500).json({ status: 'error', message: 'Error al conectar con Google Calendar.' });
     }
 });
@@ -844,8 +852,16 @@ app.post('/api/admin/calendario', async (req, res) => {
 
         res.json({ status: 'success', message: 'Cita creada exitosamente.', data: response.data });
     } catch (error) {
-        console.error('Error creating event:', error);
-        res.status(500).json({ status: 'error', message: 'Error al crear la cita en Google Calendar.' });
+        console.error('Error creating calendar event:', error);
+
+        if (error.code === 400 || error.code === 401 || (error.response && error.response.data && error.response.data.error === 'invalid_grant')) {
+            try {
+                if (fs.existsSync(TOKEN_PATH)) fs.unlinkSync(TOKEN_PATH);
+            } catch (e) {}
+            return res.json({ status: 'unauthorized', message: 'Tu sesión de Google Calendar expiró o fue revocada. Por favor, vuelve a iniciar sesión.' });
+        }
+
+        res.status(500).json({ status: 'error', message: 'Error al agendar cita en Google.' });
     }
 });
 

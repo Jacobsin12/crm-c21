@@ -22,7 +22,14 @@ self.addEventListener('activate', (e) => {
 
 // INTERCEPTOR DE RED: Obliga a ir a internet SIEMPRE en vivo. Cero offline.
 self.addEventListener('fetch', (e) => {
-  e.respondWith(fetch(e.request));
+  e.respondWith(
+    fetch(e.request).catch(() => {
+      return new Response(JSON.stringify({ status: 'error', message: 'Error de conexión con el servidor.' }), { 
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    })
+  );
 });
 
 // ==========================================
@@ -47,6 +54,6 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow(event.notification.data?.url || '/admin/clientes.html')
+    clients.openWindow(event.notification.data?.url || '/a_admin/clientes.html')
   );
 });

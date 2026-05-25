@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-    res.redirect('/admin/clientes.html');
+    res.redirect('/a_admin/clientes.html');
 });
 
 // Servir la carpeta del frontend como archivos estáticos para evitar errores de CORS y Service Worker en origin 'null'
@@ -364,7 +364,7 @@ app.post('/api/clientes/perfilar', (req, res) => {
                     title: '¡Nuevo Prospecto!',
                     body: `${nombre} busca un(a) ${tipo_propiedad} en ${zona_interes}`,
                     icon: '/assets/icons/c21.png',
-                    data: { url: `/admin/clientes.html?nuevoId=${result.insertId}` }
+                    data: { url: `/a_admin/clientes.html?nuevoId=${result.insertId}` }
                 });
                 rows.forEach(row => {
                     try {

@@ -446,7 +446,7 @@ function aplicarFiltroClientes(nuevoId = null) {
                 c.estado_seguimiento === 'Descartado' ? 'bg-rose-50 text-rose-700 border-rose-300/40' : 'bg-slate-50 text-slate-700 border-slate-300/40';
             
             const esNuevo = nuevoId && (c.id_cliente === nuevoId || c.id_cliente === Number(nuevoId));
-            const trClass = `${esNuevo ? 'bg-amber-100/60 shadow-[inset_0_0_15px_rgba(212,175,55,0.3)] transition-all duration-1000' : 'hover:bg-slate-50/80 transition-colors duration-1000'} ${estadoClass}`;
+            const trClass = `block md:table-row bg-white md:bg-transparent rounded-xl md:rounded-none border md:border-none border-slate-100 shadow-sm md:shadow-none mb-3 md:mb-0 overflow-hidden ${esNuevo ? 'bg-amber-100/60 shadow-[inset_0_0_15px_rgba(212,175,55,0.3)] transition-all duration-1000' : 'hover:bg-slate-50/80 transition-colors duration-1000'} ${estadoClass}`;
             
             const fechaObj = c.fecha_registro ? new Date(c.fecha_registro) : new Date();
             const fechaStr = fechaObj.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -454,7 +454,7 @@ function aplicarFiltroClientes(nuevoId = null) {
 
             return `
             <tr id="cliente-${c.id_cliente}" class="${trClass}">
-                <td class="p-3">
+                <td class="block md:table-cell p-4 md:p-3 border-b border-slate-100/50 md:border-b-0">
                     <div class="font-bold text-slate-900 flex items-center gap-2">
                         ${c.nombre}
                         ${requiereSeguimiento ? `<span class="bg-rose-100 text-rose-600 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase animate-pulse" title="Han pasado más de 3 días desde el último contacto">Seguimiento</span>` : ''}
@@ -470,16 +470,18 @@ function aplicarFiltroClientes(nuevoId = null) {
                         <i data-lucide="clock" class="w-3 h-3 text-[--gold-primary]"></i> ${fechaStr} a las ${horaStr}
                     </div>
                 </td>
-                <td class="p-3">
+                <td class="block md:table-cell p-4 md:p-3 border-b border-slate-100/50 md:border-b-0">
                     <span class="bg-amber-50 text-[--gold-dark] px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border border-amber-200/50">${c.tipo_operacion_buscada}</span>
                     <div class="text-slate-600 mt-1 font-semibold">${c.tipo_propiedad_buscada}</div>
                     ${c.especificaciones_clave ? `<div class="text-slate-400 text-[10px] mt-1.5 italic line-clamp-2 leading-tight" title="${c.especificaciones_clave}">"${c.especificaciones_clave}"</div>` : ''}
                 </td>
-                <td class="p-3">
+                <td class="block md:table-cell p-4 md:p-3 border-b border-slate-100/50 md:border-b-0">
                     <div class="font-bold text-slate-800">$${parseFloat(c.presupuesto_max).toLocaleString('es-MX')} MXN</div>
-                    <div class="text-slate-400 text-[11px] truncate max-w-[180px]">${c.zona_interes}</div>
+                    <div class="text-slate-400 text-[11px] truncate md:max-w-[180px]">${c.zona_interes}</div>
                 </td>
-                <td class="p-3 text-center flex justify-center gap-2 items-center">
+                <td class="block md:table-cell p-4 md:p-3 bg-slate-50/50 md:bg-transparent">
+                    <div class="flex items-center justify-between md:justify-center gap-2">
+                        <span class="md:hidden text-[10px] font-bold uppercase text-slate-400">Acción</span>
                     ${c.estado_seguimiento === 'Cerrado' ? `
                         <div class="text-[10px] px-2.5 py-1.5 border rounded-full font-bold shadow-sm bg-emerald-50 text-emerald-700 border-emerald-300/40 select-none flex items-center justify-center gap-1 cursor-not-allowed" title="Un caso cerrado no puede modificarse">
                             <i data-lucide="lock" class="w-3 h-3"></i> Cerrado
@@ -498,12 +500,18 @@ function aplicarFiltroClientes(nuevoId = null) {
                         </select>
                     `}
                     ${requiereSeguimiento ? `
+                        <button onclick="actualizarEstadoCliente(${c.id_cliente}, 'Contactado')" class="bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-colors shadow-sm" title="Marcar como Contactado">
+                            <i data-lucide="check" class="w-3 h-3"></i>
+                        </button>
+                    ` : ''}
+                    ${requiereSeguimiento ? `
                     <button onclick="registrarContactoSeguimiento(${c.id_cliente}, '${c.telefono}', '${c.nombre.replace(/'/g, "\\'")}')" class="bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white font-bold p-1.5 rounded-xl border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-md" title="Enviar Seguimiento (WhatsApp)">
                         <i data-lucide="bell-ring" class="w-4 h-4"></i>
                     </button>` : ''}
                     <button onclick="ejecutarMatchmaking(${c.id_cliente})" class="bg-slate-900 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-bold p-1.5 rounded-xl border border-emerald-500/20 transition-all cursor-pointer active:scale-95 shadow-md" title="Matchmaking Inteligente">
                         <i data-lucide="sparkles" class="w-4 h-4"></i>
                     </button>
+                    </div>
                 </td>
             </tr>
         `}).join('');

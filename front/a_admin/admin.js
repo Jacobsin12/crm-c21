@@ -461,6 +461,9 @@ function aplicarFiltroClientes(nuevoId = null) {
                         <a href="https://wa.me/52${c.telefono.replace(/\D/g, '')}?text=Hola%20${encodeURIComponent(c.nombre)},%20te%20contacto%20de%20Century%2021..." target="_blank" onclick="mostrarNotificacion('Abriendo WhatsApp...', 'success')" class="text-green-500 hover:text-green-600 cursor-pointer" title="Contactar por WhatsApp">
                             <i data-lucide="message-circle" class="w-4 h-4"></i>
                         </a>
+                        <button onclick="abrirModalEditarProspecto(${c.id_cliente})" class="text-slate-400 hover:text-[--gold-primary] cursor-pointer" title="Editar Prospecto">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
                     </div>
                     <div class="text-slate-400 text-[11px] font-medium">${c.telefono}</div>
                     <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
@@ -674,8 +677,7 @@ async function enviarProspectoManual() {
 
     if (!nombre || nombre.length < 4) return mostrarNotificacion('Ingresa el nombre completo.', 'error');
     if (!telefono || telefono.length < 10) return mostrarNotificacion('Ingresa el número de WhatsApp completo.', 'error');
-    if (!correo) return mostrarNotificacion('Ingresa el correo electrónico.', 'error');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return mostrarNotificacion('Correo inválido.', 'error');
+    if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return mostrarNotificacion('Correo inválido.', 'error');
     if (!window.prospectoManual.tipo_operacion) return mostrarNotificacion('Selecciona el tipo de operación.', 'error');
     if (!window.prospectoManual.tipo_propiedad) return mostrarNotificacion('Selecciona el tipo de propiedad.', 'error');
     if (!window.prospectoManual.presupuesto_max) return mostrarNotificacion('Selecciona o ingresa un presupuesto.', 'error');
@@ -748,7 +750,90 @@ async function actualizarEstadoCliente(id, estado) {
         if (c) c.estado_seguimiento = estado;
         aplicarFiltroClientes();
         mostrarNotificacion(`Estado cambiado a: ${estado}`, 'info');
-    } catch { mostrarNotificacion("Error al actualizar estado.", 'error'); }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('Error de conexión.', 'error');
+    }
+}
+
+// ==========================================
+// EDICIÓN BÁSICA DE PROSPECTO
+// ==========================================
+function abrirModalEditarProspecto(id_cliente) {
+    if (document.getElementById('modalEditarProspecto')) return;
+
+    const cliente = window.clientesGlobal.find(c => c.id_cliente === id_cliente);
+    if (!cliente) return;
+
+    const div = document.createElement('div');
+    div.id = 'modalEditarProspecto';
+    div.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4';
+    div.innerHTML = `
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Editar Prospecto</h3>
+                    <p class="text-xs text-slate-500">Actualiza la información de contacto.</p>
+                </div>
+                <button onclick="cerrarModalEditarProspecto()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4 text-sm text-slate-700">
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1 block">Nombre completo</label>
+                    <input id="editNombre" type="text" value="${cliente.nombre || ''}" class="luxury-input w-full px-4 py-3">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1 block">WhatsApp (10 dígitos)</label>
+                    <input id="editTelefono" type="tel" maxlength="10" value="${cliente.telefono || ''}" class="luxury-input w-full px-4 py-3">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1 block">Correo electrónico (opcional)</label>
+                    <input id="editCorreo" type="email" value="${cliente.correo || ''}" class="luxury-input w-full px-4 py-3">
+                </div>
+            </div>
+            <div class="mt-6 flex gap-3">
+                <button type="button" onclick="cerrarModalEditarProspecto()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button>
+                <button type="button" onclick="guardarEdicionProspecto(${id_cliente})" class="flex-1 bg-[--gold-primary] hover:bg-amber-500 text-black font-bold py-3 rounded-xl transition-colors">Guardar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(div);
+    if (window.lucide) lucide.createIcons();
+}
+
+function cerrarModalEditarProspecto() {
+    document.getElementById('modalEditarProspecto')?.remove();
+}
+
+async function guardarEdicionProspecto(id_cliente) {
+    const nombre = document.getElementById('editNombre').value.trim();
+    const telefono = document.getElementById('editTelefono').value.trim();
+    const correo = document.getElementById('editCorreo').value.trim();
+
+    if (!nombre || nombre.length < 4) return mostrarNotificacion('Ingresa el nombre completo.', 'error');
+    if (!telefono || telefono.length < 10) return mostrarNotificacion('Ingresa el número de WhatsApp completo.', 'error');
+    if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return mostrarNotificacion('Correo inválido.', 'error');
+
+    try {
+        const response = await fetch(`${window.API_BASE_URL}/admin/clientes/${id_cliente}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, telefono, correo })
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            mostrarNotificacion(result.message, 'success');
+            cerrarModalEditarProspecto();
+            cargarClientes(id_cliente);
+        } else {
+            mostrarNotificacion(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarNotificacion('Error de conexión.', 'error');
+    }
 }
 
 // ==========================================

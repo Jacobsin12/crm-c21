@@ -340,7 +340,33 @@ app.post('/api/admin/confirmar-actualizacion', (req, res) => {
 });
 
 // ==========================================
-// RUTA 2: RECIBIR PERFILAMIENTO DEL CLIENTE (FORMULARIO)
+// RUTA 2.5: EDITAR PROSPECTO BÁSICO
+// ==========================================
+app.put('/api/admin/clientes/:id', (req, res) => {
+    const id = req.params.id;
+    const { nombre, telefono, correo } = req.body;
+
+    if (!nombre || !telefono) {
+        return res.status(400).json({ status: 'error', message: 'Nombre y teléfono son obligatorios.' });
+    }
+
+    const query = `
+        UPDATE clientes_prospectos 
+        SET nombre = ?, telefono = ?, correo = ?
+        WHERE id_cliente = ?
+    `;
+
+    db.query(query, [nombre, telefono, correo || null, id], (err, result) => {
+        if (err) {
+            console.error("❌ Error al editar prospecto:", err.message);
+            return res.status(500).json({ status: 'error', message: 'Error interno al actualizar los datos.' });
+        }
+        res.json({ status: 'success', message: 'Prospecto actualizado correctamente.' });
+    });
+});
+
+// ==========================================
+// RUTA 3: RECIBIR PERFILAMIENTO DEL CLIENTE (FORMULARIO)
 // ==========================================
 app.post('/api/clientes/perfilar', (req, res) => {
     const { nombre, telefono, correo, tipo_propiedad, tipo_operacion, presupuesto_max, zona_interes, especificaciones } = req.body;
